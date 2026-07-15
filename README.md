@@ -1,16 +1,56 @@
-# React + Vite
+# ⚡ FastClip Paroni
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+![FastClip UI Preview](./public/favicon.ico)
 
-Currently, two official plugins are available:
+**FastClip Paroni** é uma aplicação web moderna e extremamente rápida para clipping de vídeos. Com ela, você pode fazer upload de vídeos longos (de minutos até horas), selecionar trechos em uma timeline interativa e criar pequenos cortes (clips) — **tudo rodando 100% no seu próprio navegador**.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Nenhum arquivo de vídeo é enviado para servidores externos, o que garante total privacidade e velocidade na edição graças ao poder do **WebAssembly (FFmpeg)**.
 
-## React Compiler
+## ✨ Funcionalidades
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- 🚀 **100% Client-Side:** Processamento de vídeo feito inteiramente no navegador do usuário sem depender de um backend.
+- 💾 **Suporte a Vídeos Gigantes:** Graças ao uso do FileSystem virtual (`WORKERFS`), arquivos massivos (ex: 3GB+) são montados e lidos sob demanda, não estourando a memória RAM do navegador.
+- ✂️ **Timeline Interativa:** Selecione facilmente o ponto de início e fim do seu clip visualmente.
+- 📦 **Download em Lote:** Baixe seus clips um a um ou exporte todos de uma vez empacotados num arquivo `.zip`.
+- 🎨 **Design Moderno:** UI baseada em glassmorphism com esquema de cores otimizado para produtividade (Dark/Navy Blue e Cyan).
 
-## Expanding the Oxlint configuration
+## 🛠️ Tecnologias Utilizadas
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+- **[React.js](https://react.dev/)** + **[Vite](https://vitejs.dev/)** - Para a construção de uma interface ágil e componentizada.
+- **[FFmpeg.wasm](https://ffmpegwasm.netlify.app/)** - O core de edição audiovisual compilado para a web.
+- **[JSZip](https://stuk.github.io/jszip/)** - Para empacotamento de múltiplos clips.
+- **CSS3 Puro (Vanilla)** - Estilização customizada focada em alta performance visual sem a necessidade de frameworks CSS adicionais.
+
+## 🚀 Como rodar localmente
+
+Siga o passo a passo abaixo para rodar o FastClip na sua própria máquina:
+
+1. **Clone este repositório:**
+   ```bash
+   git clone https://github.com/RafaelParoni/FastClipParoni.git
+   ```
+
+2. **Acesse a pasta do projeto:**
+   ```bash
+   cd FastClipParoni
+   ```
+
+3. **Instale as dependências:**
+   ```bash
+   npm install
+   ```
+
+4. **Inicie o servidor de desenvolvimento:**
+   ```bash
+   npm run dev
+   ```
+
+5. **Abra no seu navegador:**
+   O aplicativo estará rodando em `http://localhost:5173`.
+
+## 👨‍💻 Autor
+
+Criado e mantido por **Rafael Paroni**.
+
+- 📸 [Instagram: @rafael_paroni](https://www.instagram.com/rafael_paroni)
+- 🐙 [GitHub: RafaelParoni](https://github.com/RafaelParoni)
