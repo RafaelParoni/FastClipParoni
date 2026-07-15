@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head><title>FFmpeg Test</title></head>
+<body>
+<h1>FFmpeg.wasm Load Test</h1>
+<pre id="log"></pre>
+<script type="module">
+const log = (msg) => {
+  document.getElementById('log').textContent += msg + '\n';
+  console.log(msg);
+};
+
+log('Starting FFmpeg test...');
+log('crossOriginIsolated: ' + self.crossOriginIsolated);
+log('SharedArrayBuffer available: ' + (typeof SharedArrayBuffer !== 'undefined'));
+
+try {
+  const { FFmpeg } = await import('/node_modules/.vite/deps/@ffmpeg_ffmpeg.js');
+  log('FFmpeg class imported OK');
+  
+  const ffmpeg = new FFmpeg();
+  ffmpeg.on('log', ({ message }) => log('[FFmpeg] ' + message));
+  
+  log('Attempting to load ffmpeg core...');
+  const coreURL = '/ffmpeg/ffmpeg-core.js';
+  const wasmURL = '/ffmpeg/ffmpeg-core.wasm';
+  log('coreURL: ' + coreURL);
+  log('wasmURL: ' + wasmURL);
+  
+  await ffmpeg.load({ coreURL, wasmURL });
+  log('SUCCESS: FFmpeg loaded!');
+} catch (e) {
+  log('ERROR: ' + e.message);
+  log('Stack: ' + e.stack);
+}
+</script>
+</body>
+</html>
