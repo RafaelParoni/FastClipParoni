@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
+import watermarkImg from '../assets/WaterMark.png';
 
 export function useFFmpeg() {
   const ffmpegRef = useRef(null);
@@ -55,7 +56,7 @@ export function useFFmpeg() {
     return promise;
   }, [loaded]);
 
-  const createClip = useCallback(async (videoFile, startTime, endTime, clipName) => {
+  const createClip = useCallback(async (videoFile, startTime, endTime, clipName, useWatermark = false) => {
     if (!ffmpegRef.current) {
       throw new Error('FFmpeg não carregado');
     }
@@ -84,17 +85,44 @@ export function useFFmpeg() {
       const outputName = clipName + '.mp4';
 
       const duration = endTime - startTime;
-      console.log(`Creating clip: ${startTime.toFixed(2)}s -> ${endTime.toFixed(2)}s (${duration.toFixed(2)}s)`);
+      console.log(`Creating clip: ${startTime.toFixed(2)}s -> ${endTime.toFixed(2)}s (${duration.toFixed(2)}s). Watermark: ${useWatermark}`);
 
-      await ffmpeg.exec([
-        '-ss', String(startTime),
-        '-i', inputName,
-        '-t', String(duration),
-        '-c', 'copy',
-        '-avoid_negative_ts', 'make_zero',
-        '-y',
-        outputName,
-      ]);
+      let ffmpegArgs = [];
+
+      if (useWatermark) {
+        // Fetch and write the watermark image to FFmpeg filesystem
+        const res = await fetch(watermarkImg);
+        const buf = await res.arrayBuffer();
+        await ffmpeg.writeFile('watermark.png', new Uint8Array(buf));
+        
+        setProcessingMessage(`Cortando vídeo...`);
+        
+        ffmpegArgs = [
+          '-ss', String(startTime),
+          '-i', inputName,
+          '-i', 'watermark.png',
+          '-t', String(duration),
+          '-filter_complex', '[1:v]scale=-1:60[wm];[0:v][wm]overlay=W-w-20:H-h-20', // Scale to 60px height, bottom right
+          '-c:v', 'libx264',
+          '-preset', 'ultrafast',
+          '-c:a', 'copy',
+          '-avoid_negative_ts', 'make_zero',
+          '-y',
+          outputName
+        ];
+      } else {
+        ffmpegArgs = [
+          '-ss', String(startTime),
+          '-i', inputName,
+          '-t', String(duration),
+          '-c', 'copy',
+          '-avoid_negative_ts', 'make_zero',
+          '-y',
+          outputName
+        ];
+      }
+
+      await ffmpeg.exec(ffmpegArgs);
 
       const data = await ffmpeg.readFile(outputName);
       console.log(`Clip created: ${data.length} bytes`);
@@ -104,6 +132,7 @@ export function useFFmpeg() {
       // Cleanup
       try {
         await ffmpeg.deleteFile(outputName);
+        if (useWatermark) await ffmpeg.deleteFile('watermark.png');
         await ffmpeg.unmount('/work');
       } catch (e) {
         // Ignore cleanup errors

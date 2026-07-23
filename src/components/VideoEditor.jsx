@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import Timeline, { formatTime } from './Timeline';
 import ClipList from './ClipList';
 import ClipPreviewModal from './ClipPreviewModal';
+import DropboxUploadModal from './DropboxUploadModal';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 
@@ -25,6 +26,16 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
 
   // Preview modal
   const [previewClip, setPreviewClip] = useState(null);
+
+  // Dropbox upload modal state
+  const [dropboxModalState, setDropboxModalState] = useState({
+    isOpen: false,
+    status: 'idle',
+    progress: 0,
+    link: '',
+    errorMessage: ''
+  });
+  const pendingDropboxClipRef = useRef(null);
 
   // Loading state for download all
   const [downloadingAll, setDownloadingAll] = useState(false);
@@ -89,6 +100,24 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
     };
   }, []);
 
+  // Listen for Dropbox OAuth messages
+  useEffect(() => {
+    function handleMessage(event) {
+      if (event.origin !== window.location.origin) return;
+      if (event.data.type === 'dropbox-auth-success') {
+        localStorage.setItem('dropbox_token', event.data.token);
+        if (pendingDropboxClipRef.current) {
+          startDropboxUpload(pendingDropboxClipRef.current, event.data.token);
+          pendingDropboxClipRef.current = null;
+        }
+      } else if (event.data.type === 'dropbox-auth-error') {
+        setDropboxModalState(prev => ({ ...prev, status: 'error', errorMessage: 'Autenticação falhou: ' + event.data.error }));
+      }
+    }
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   // Create clip
   const handleCreateClip = useCallback(async () => {
     if (clipEnd <= clipStart) {
@@ -103,7 +132,7 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
       }
 
       const name = `clip_${clipCounter}`;
-      const blob = await ffmpeg.createClip(videoFile, clipStart, clipEnd, name);
+      const blob = await ffmpeg.createClip(videoFile, clipStart, clipEnd, name, true); // True força a marca d'água
 
       const newClip = {
         id: Date.now().toString(),
@@ -165,6 +194,120 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
       URL.revokeObjectURL(url);
     }, 100);
   }
+
+  // Dropbox Logic
+  const handleDropboxUploadClick = (clip) => {
+    const clientId = import.meta.env.VITE_DROPBOX_CLIENT_ID;
+    if (!clientId || clientId === 'COLOQUE_SEU_CLIENT_ID_AQUI') {
+      alert('Você precisa configurar o VITE_DROPBOX_CLIENT_ID no arquivo .env!');
+      return;
+    }
+
+    const token = localStorage.getItem('dropbox_token');
+    if (!token) {
+      pendingDropboxClipRef.current = clip;
+      setDropboxModalState({ isOpen: true, status: 'connecting', progress: 0, link: '', errorMessage: '' });
+      
+      const redirectUri = `${window.location.origin}/oauth-callback.html`;
+      const authUrl = `https://www.dropbox.com/oauth2/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}`;
+      window.open(authUrl, 'dropbox-auth', 'width=600,height=800,menubar=no,toolbar=no');
+    } else {
+      startDropboxUpload(clip, token);
+    }
+  };
+
+  const startDropboxUpload = async (clip, token) => {
+    setDropboxModalState({ isOpen: true, status: 'uploading', progress: 0, link: '', errorMessage: '' });
+    
+    try {
+      const safeName = clip.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      const path = `/FastClipParoni/${safeName}_${Date.now()}.mp4`;
+      
+      const uploadReq = new XMLHttpRequest();
+      
+      uploadReq.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          setDropboxModalState(prev => ({ ...prev, progress: percentComplete }));
+        }
+      };
+      
+      uploadReq.open('POST', 'https://content.dropboxapi.com/2/files/upload');
+      uploadReq.setRequestHeader('Authorization', `Bearer ${token}`);
+      uploadReq.setRequestHeader('Content-Type', 'application/octet-stream');
+      
+      const apiArg = {
+        path: `/${safeName}_${Date.now()}.mp4`,
+        autorename: true
+      };
+      
+      // Dropbox exige que o header seja compatível com caracteres não-latinos
+      // Usando uma abordagem mais segura para o encoding se houver acentos (embora safeName já filtre isso)
+      const encodedApiArg = unescape(encodeURIComponent(JSON.stringify(apiArg)));
+      uploadReq.setRequestHeader('Dropbox-API-Arg', encodedApiArg);
+
+      uploadReq.onload = async () => {
+        if (uploadReq.status >= 200 && uploadReq.status < 300) {
+           setDropboxModalState(prev => ({ ...prev, status: 'generating' }));
+           
+           try {
+             const shareRes = await fetch('https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings', {
+               method: 'POST',
+               headers: {
+                 'Authorization': `Bearer ${token}`,
+                 'Content-Type': 'application/json'
+               },
+               body: JSON.stringify({ path: apiArg.path, settings: { requested_visibility: "public" } })
+             });
+             
+             if (!shareRes.ok) {
+                const errJson = await shareRes.json();
+                throw new Error(errJson.error_summary || 'Falha ao gerar link');
+             }
+             const shareData = await shareRes.json();
+             
+             let url = shareData.url;
+             // Troca para o subdomínio direto, mantendo os parâmetros de segurança vitais (rlkey, st)
+             url = url.replace('www.dropbox.com', 'dl.dropboxusercontent.com');
+             // Substitui o comando de download pelo comando de visualização raw
+             url = url.replace('dl=0', 'raw=1');
+             if (!url.includes('raw=1')) {
+                url += (url.includes('?') ? '&' : '?') + 'raw=1';
+             }
+             
+             setDropboxModalState(prev => ({ ...prev, status: 'success', link: url }));
+           } catch (e) {
+             setDropboxModalState(prev => ({ ...prev, status: 'error', errorMessage: e.message }));
+           }
+        } else {
+           let errMsg = `Erro ${uploadReq.status}`;
+           if (uploadReq.responseText) {
+              console.error("Resposta do Dropbox:", uploadReq.responseText);
+              try {
+                 const errJson = JSON.parse(uploadReq.responseText);
+                 errMsg += ': ' + (errJson.error_summary || errJson.error);
+              } catch(e) {
+                 errMsg += ' - Ocorreu um erro no servidor.';
+              }
+           }
+           if (uploadReq.status === 401 || (uploadReq.responseText && uploadReq.responseText.includes('scope'))) {
+              errMsg = 'Por conta das novas permissões, sua sessão expirou. Feche esta janela, clique em Dropbox novamente e refaça o login!';
+              localStorage.removeItem('dropbox_token');
+           }
+           setDropboxModalState(prev => ({ ...prev, status: 'error', errorMessage: errMsg }));
+        }
+      };
+      
+      uploadReq.onerror = () => {
+        setDropboxModalState(prev => ({ ...prev, status: 'error', errorMessage: 'Falha na rede durante o upload.' }));
+      };
+      
+      uploadReq.send(clip.blob);
+    } catch (err) {
+       console.error(err);
+       setDropboxModalState(prev => ({ ...prev, status: 'error', errorMessage: err.message }));
+    }
+  };
 
   // Delete clip
   function handleDeleteClip(id) {
@@ -247,6 +390,7 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
             >
               ✂️ Criar Clip ({formatTime(clipEnd - clipStart)})
             </button>
+            
             <button
               className="btn btn-secondary"
               onClick={() => {
@@ -275,6 +419,7 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
           onDownload={handleDownloadClip}
           onDelete={handleDeleteClip}
           onDownloadAll={handleDownloadAll}
+          onDropboxUpload={handleDropboxUploadClick}
         />
       </div>
 
@@ -284,6 +429,17 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
           clip={previewClip}
           onClose={() => setPreviewClip(null)}
           onDownload={handleDownloadClip}
+        />
+      )}
+
+      {/* Dropbox upload modal */}
+      {dropboxModalState.isOpen && (
+        <DropboxUploadModal
+          status={dropboxModalState.status}
+          progress={dropboxModalState.progress}
+          link={dropboxModalState.link}
+          errorMessage={dropboxModalState.errorMessage}
+          onClose={() => setDropboxModalState(prev => ({ ...prev, isOpen: false }))}
         />
       )}
 

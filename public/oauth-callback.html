@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropbox Autenticação</title>
+</head>
+<body>
+    <p>Autenticando... Por favor, aguarde.</p>
+    <script>
+        // Parse the hash parameters from the URL
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+        const error = params.get('error');
+
+        if (accessToken) {
+            // Send the token to the parent window
+            if (window.opener) {
+                window.opener.postMessage({ type: 'dropbox-auth-success', token: accessToken }, window.location.origin);
+                window.close();
+            } else {
+                document.body.innerHTML = '<p>Erro: Não foi possível encontrar a janela principal. Você pode fechar esta aba e tentar novamente.</p>';
+            }
+        } else if (error) {
+            if (window.opener) {
+                window.opener.postMessage({ type: 'dropbox-auth-error', error: error }, window.location.origin);
+                window.close();
+            } else {
+                document.body.innerHTML = '<p>Erro na autenticação com o Dropbox.</p>';
+            }
+        } else {
+            document.body.innerHTML = '<p>Nenhum token encontrado. Feche esta janela e tente novamente.</p>';
+        }
+    </script>
+</body>
+</html>

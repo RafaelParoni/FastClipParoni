@@ -1,6 +1,6 @@
 import { formatTime } from './Timeline';
 
-export default function ClipList({ clips, onPreview, onDownload, onDelete, onDownloadAll }) {
+export default function ClipList({ clips, onPreview, onDownload, onDelete, onDownloadAll, onDropboxUpload }) {
   return (
     <div className="clip-sidebar">
       <div className="clip-sidebar-header">
@@ -41,6 +41,14 @@ export default function ClipList({ clips, onPreview, onDownload, onDelete, onDow
                   title="Baixar clip"
                 >
                   ⬇ Baixar
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => onDropboxUpload(clip)}
+                  title="Salvar no Dropbox"
+                  style={{ backgroundColor: '#0061FE', borderColor: '#0061FE', color: '#fff' }}
+                >
+                  ☁️ Dropbox
                 </button>
                 <button
                   className="btn btn-danger"
