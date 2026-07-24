@@ -266,16 +266,15 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
              }
              const shareData = await shareRes.json();
              
-             let url = shareData.url;
-             // Troca para o subdomínio direto, mantendo os parâmetros de segurança vitais (rlkey, st)
-             url = url.replace('www.dropbox.com', 'dl.dropboxusercontent.com');
-             // Substitui o comando de download pelo comando de visualização raw
-             url = url.replace('dl=0', 'raw=1');
-             if (!url.includes('raw=1')) {
-                url += (url.includes('?') ? '&' : '?') + 'raw=1';
-             }
+             const originalUrl = new URL(shareData.url);
+             // originalUrl.pathname costuma ser "/scl/fi/[id_do_arquivo]/[nome_do_arquivo]"
+             const pathPart = originalUrl.pathname.replace('/scl/fi/', '');
+             const rlkey = originalUrl.searchParams.get('rlkey');
              
-             setDropboxModalState(prev => ({ ...prev, status: 'success', link: url }));
+             // Gera o link usando a URL da própria aplicação
+             const customUrl = `${window.location.origin}/v/${pathPart}?rlkey=${rlkey}`;
+             
+             setDropboxModalState(prev => ({ ...prev, status: 'success', link: customUrl }));
            } catch (e) {
              setDropboxModalState(prev => ({ ...prev, status: 'error', errorMessage: e.message }));
            }
