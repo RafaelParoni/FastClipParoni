@@ -1021,13 +1021,15 @@ p {
 
 .social-links a,
 .social-links-header a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
   color: var(--accent-primary);
   text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 500;
   transition: all 0.2s;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
+  border-radius: 8px;
   background: var(--bg-glass);
 }
 
@@ -1044,4 +1046,123 @@ p {
   margin-right: 1rem;
   align-items: center;
 }
+
+/* ========== Responsive Utilities ========== */
+.mobile-only {
+  display: none !important;
+}
+
+/* ========== Responsive / Mobile Styles ========== */
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+  .mobile-only {
+    display: flex !important;
+  }
+  /* Upload Screen */
+  .upload-screen {
+    padding: var(--space-md);
+    gap: var(--space-lg);
+  }
+  
+  .upload-screen .logo-area h1 {
+    font-size: 2rem;
+  }
+  
+  .upload-screen .logo-area p {
+    font-size: 0.95rem;
+  }
+  
+  .upload-zone {
+    padding: var(--space-xl) var(--space-md);
+  }
+  
+  .upload-zone h3 {
+    font-size: 1.1rem;
+  }
+
+  /* Editor Layout */
+  .editor-header {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    justify-content: center;
+    padding: var(--space-sm);
+  }
+
+  .editor-header .file-name {
+    display: none;
+  }
+
+  .editor-header .header-actions {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .social-links-header {
+    margin-right: 0;
+  }
+
+  /* Stack main content and sidebar */
+  .editor-body {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .editor-main {
+    flex: none;
+  }
+  
+  .video-container {
+    min-height: 250px;
+    height: 40vh;
+  }
+
+  /* Controls & Timeline */
+  .video-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: var(--space-sm);
+    gap: var(--space-sm);
+  }
+
+  .time-inputs {
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: var(--space-sm);
+  }
+  
+  .create-clip-area {
+    flex-direction: column;
+    margin-top: var(--space-lg);
+  }
+  
+  .create-clip-area .btn {
+    width: 100%;
+  }
+
+  /* Sidebar */
+  .clip-sidebar {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border-subtle);
+    flex: none;
+  }
+
+  .clip-list {
+    max-height: 500px;
+  }
+
+  /* WatchScreen Adjustments */
+  .editor-main > div[style*="marginTop"] {
+    flex-direction: column !important;
+  }
+  
+  .editor-main > div[style*="marginTop"] > .btn,
+  .editor-main > div[style*="marginTop"] > a {
+    width: 100% !important;
+    min-width: unset !important;
+  }
+}
+
 

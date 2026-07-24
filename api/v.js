@@ -28,8 +28,8 @@ export default function handler(req, res) {
     
     <meta name="theme-color" content="#40afff" /> <!-- Cor do embed no Discord (Azul) -->
 
-    <!-- Redirecionamento Automático para o Dropbox para usuários reais clicarem -->
-    <meta http-equiv="refresh" content="0; url=${dropboxUrl}" />
+    <!-- Redirecionamento Automático para o app para usuários reais clicarem -->
+    <meta http-equiv="refresh" content="0; url=/?watch=${encodeURIComponent(path)}&rlkey=${rlkey}" />
     
     <style>
       body {
@@ -47,7 +47,7 @@ export default function handler(req, res) {
 <body>
     <div>
         <h2>Carregando clipe...</h2>
-        <p>Se você não for redirecionado automaticamente, <a href="${dropboxUrl}" style="color: #FF4500;">clique aqui</a>.</p>
+        <p>Se você não for redirecionado automaticamente, <a href="/?watch=${encodeURIComponent(path)}&rlkey=${rlkey}" style="color: #40afff;">clique aqui</a>.</p>
     </div>
 </body>
 </html>
