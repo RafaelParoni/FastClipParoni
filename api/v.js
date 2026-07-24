@@ -20,13 +20,13 @@ export default function handler(req, res) {
     <!-- Open Graph / Discord Meta Tags -->
     <meta property="og:title" content="Novo Clipe Criado!" />
     <meta property="og:site_name" content="FastClip" />
-    <meta property="og:description" content="Assista a este clipe criado com o FastClip!" />
+    <meta property="og:description" content="Crie seu clipe gratuitamente em fast-clip.vercel.app!" />
     <meta property="og:video" content="${dropboxUrl}" />
     <meta property="og:video:secure_url" content="${dropboxUrl}" />
     <meta property="og:video:type" content="video/mp4" />
     <meta property="og:type" content="video.other" />
     
-    <meta name="theme-color" content="#FF4500" /> <!-- Cor do embed no Discord (Laranja) -->
+    <meta name="theme-color" content="#40afff" /> <!-- Cor do embed no Discord (Azul) -->
 
     <!-- Redirecionamento Automático para o Dropbox para usuários reais clicarem -->
     <meta http-equiv="refresh" content="0; url=${dropboxUrl}" />
