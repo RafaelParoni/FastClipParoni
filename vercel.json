@@ -2,6 +2,13 @@
   "rewrites": [
     {
       "source": "/clips/watch/(.*)",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(bot|Bot|discord|Discord|twitter|Twitter|facebook|Facebook|whatsapp|WhatsApp|telegram|Telegram|slack|Slack).*"
+        }
+      ],
       "destination": "/api/watch?id=$1"
     },
     {
