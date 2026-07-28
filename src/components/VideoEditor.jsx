@@ -5,6 +5,8 @@ import ClipPreviewModal from './ClipPreviewModal';
 import DropboxUploadModal from './DropboxUploadModal';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
+import { db } from '../services/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
   const videoRef = useRef(null);
@@ -401,6 +403,8 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
   }
 
   // Dropbox Logic
+  const pendingUploadMetadataRef = useRef(null);
+
   const handleDropboxUploadClick = (clip) => {
     const clientId = import.meta.env.VITE_DROPBOX_CLIENT_ID;
     if (!clientId || clientId === 'COLOQUE_SEU_CLIENT_ID_AQUI') {
@@ -408,22 +412,52 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
       return;
     }
 
+    pendingDropboxClipRef.current = clip;
+    setDropboxModalState({ isOpen: true, status: 'metadata', progress: 0, link: '', errorMessage: '' });
+  };
+
+  const startDropboxUploadFlow = (title, isPublic) => {
+    pendingUploadMetadataRef.current = { title, isPublic };
+    const clientId = import.meta.env.VITE_DROPBOX_CLIENT_ID;
     const token = localStorage.getItem('dropbox_token');
+
     if (!token) {
-      pendingDropboxClipRef.current = clip;
-      setDropboxModalState({ isOpen: true, status: 'connecting', progress: 0, link: '', errorMessage: '' });
-      
+      setDropboxModalState(prev => ({ ...prev, status: 'connecting' }));
       const redirectUri = `${window.location.origin}/oauth-callback.html`;
       const authUrl = `https://www.dropbox.com/oauth2/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}`;
       window.open(authUrl, 'dropbox-auth', 'width=600,height=800,menubar=no,toolbar=no');
     } else {
-      startDropboxUpload(clip, token);
+      startDropboxUpload(pendingDropboxClipRef.current, token);
     }
   };
 
   const startDropboxUpload = async (clip, token) => {
-    setDropboxModalState({ isOpen: true, status: 'uploading', progress: 0, link: '', errorMessage: '' });
+    setDropboxModalState(prev => ({ ...prev, status: 'uploading', progress: 0, link: '', errorMessage: '' }));
     
+    // Helper para gerar a thumbnail
+    const generateThumbnail = (blob) => {
+      return new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.autoplay = false;
+        video.muted = true;
+        video.src = URL.createObjectURL(blob);
+        video.onloadeddata = () => {
+          video.currentTime = 0.5; // seek slightly forward to avoid black frame
+        };
+        video.onseeked = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = 320; 
+          canvas.height = (video.videoHeight / video.videoWidth) * 320;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          URL.revokeObjectURL(video.src);
+          resolve(dataUrl);
+        };
+        video.onerror = () => resolve(null);
+      });
+    };
+
     try {
       const safeName = clip.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
       const path = `/FastClipParoni/${safeName}_${Date.now()}.mp4`;
@@ -471,13 +505,45 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
              }
              const shareData = await shareRes.json();
              
-             const originalUrl = new URL(shareData.url);
-             // originalUrl.pathname costuma ser "/scl/fi/[id_do_arquivo]/[nome_do_arquivo]"
-             const pathPart = originalUrl.pathname.replace('/scl/fi/', '');
-             const rlkey = originalUrl.searchParams.get('rlkey');
+             // Transforma o link compartilhável do Dropbox em um link direto (raw)
+             // Ex: https://www.dropbox.com/scl/fi/xyz/arquivo.mp4?rlkey=abc&dl=0 -> https://dl.dropboxusercontent.com/scl/fi/xyz/arquivo.mp4?rlkey=abc&raw=1
+             const rawUrl = shareData.url.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('dl=0', 'raw=1');
+             if (!rawUrl.includes('raw=1')) {
+                // if it didn't have dl=0
+                rawUrl += '&raw=1';
+             }
+
+             // Fetch IP
+             let ip = '0.0.0.0';
+             try {
+               const res = await fetch('https://api.ipify.org?format=json');
+               const data = await res.json();
+               ip = data.ip;
+             } catch (e) {
+               console.warn("Could not fetch IP");
+             }
+
+             // Generate Thumbnail
+             let thumbnailBase64 = null;
+             try {
+               thumbnailBase64 = await generateThumbnail(pendingDropboxClipRef.current.blob);
+             } catch (e) {
+               console.warn("Could not generate thumbnail");
+             }
+
+             // Salvar no Firestore
+             const { title, isPublic } = pendingUploadMetadataRef.current;
+             const docRef = await addDoc(collection(db, "clips"), {
+               title,
+               privacy: isPublic,
+               url: rawUrl,
+               thumbnail: thumbnailBase64,
+               createdAt: new Date().toISOString(),
+               ip
+             });
              
-             // Gera o link usando a URL da própria aplicação
-             const customUrl = `${window.location.origin}/v/${pathPart}?rlkey=${rlkey}`;
+             // Gera o link da aplicação usando o ID do Firestore
+             const customUrl = `${window.location.origin}/clips/watch/${docRef.id}`;
              
              setDropboxModalState(prev => ({ ...prev, status: 'success', link: customUrl }));
            } catch (e) {
@@ -525,7 +591,11 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
         <span className="logo">
           <img src="/favicon.ico" alt="Logo" className="site-icon" /> FastClip<span className="author-name">Paroni</span>
         </span>
-        <span className="file-name" title={videoFile.name}>📁 {videoFile.name}</span>
+        <nav className="header-nav">
+          <a href="/">🏠 Início</a>
+          <a href="/clips">🌍 Clips</a>
+          <a href="/">✂️ Criar clip</a>
+        </nav>
         <div className="header-actions">
           <div className="social-links-header">
             <a href="https://www.instagram.com/rafael_paroni" target="_blank" rel="noopener noreferrer" title="Instagram">
@@ -535,9 +605,6 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
             </a>
           </div>
-          <button className="btn btn-secondary" onClick={onBack}>
-            ← Novo Vídeo
-          </button>
         </div>
       </div>
 
@@ -663,6 +730,7 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
           link={dropboxModalState.link}
           errorMessage={dropboxModalState.errorMessage}
           onClose={() => setDropboxModalState(prev => ({ ...prev, isOpen: false }))}
+          onStartUpload={startDropboxUploadFlow}
         />
       )}
 

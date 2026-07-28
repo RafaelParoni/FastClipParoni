@@ -332,6 +332,60 @@ p {
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
+  position: relative;
+}
+
+.header-nav {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.header-nav a {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.header-nav a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--primary);
+}
+
+@media (max-width: 768px) {
+  .header-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    transform: none;
+    background: rgba(15, 15, 20, 0.85);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border-subtle);
+    padding: 10px 0;
+    justify-content: space-evenly;
+    z-index: 1000;
+  }
+  
+  .header-nav a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.8rem;
+    gap: 6px;
+    padding: 6px 12px;
+  }
+  
+  /* Add padding to body or containers to prevent content from hiding behind the bottom nav */
+  .editor-body, .feed-container, .upload-screen {
+    padding-bottom: 80px !important;
+  }
 }
 
 .editor-header .logo {
@@ -1581,4 +1635,89 @@ p {
   color: #fff;
   font-size: 2.5rem;
   margin: 0;
+}
+
+/* Clips Feed Styles */
+.clip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.clip-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.clip-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.4);
+  border-color: var(--primary);
+}
+
+.clip-card-thumb {
+  background: linear-gradient(135deg, #2b3040 0%, #1a1d27 100%);
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.clip-card-thumb.public-thumb {
+  background: linear-gradient(135deg, #3f2a18 0%, #24160a 100%);
+}
+
+.play-icon {
+  font-size: 3rem;
+  color: rgba(255,255,255,0.4);
+  transition: color 0.2s, transform 0.2s;
+}
+
+.clip-card:hover .play-icon {
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.clip-card-info {
+  padding: 1.2rem;
+}
+
+.clip-card-info h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.clip-card-info p {
+  margin: 0 0 1rem 0;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-public {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.badge-private {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
 }

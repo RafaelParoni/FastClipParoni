@@ -1,19 +1,31 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
 export default function DropboxUploadModal({ 
-  status, // 'connecting', 'uploading', 'generating', 'success', 'error'
+  status, // 'metadata', 'connecting', 'uploading', 'generating', 'success', 'error'
   progress, // 0 to 100
   link, // generated link
   errorMessage,
-  onClose
+  onClose,
+  onStartUpload
 }) {
   const linkInputRef = useRef(null);
+  const [title, setTitle] = useState('');
+  const [isPublic, setIsPublic] = useState(true);
 
   const copyToClipboard = () => {
     if (linkInputRef.current) {
       linkInputRef.current.select();
       document.execCommand('copy');
-      // optional visual feedback could be added here
+    }
+  };
+
+  const handleStart = () => {
+    if (!title.trim()) {
+      alert('Por favor, insira um título para o vídeo.');
+      return;
+    }
+    if (onStartUpload) {
+      onStartUpload(title, isPublic);
     }
   };
 
@@ -21,13 +33,42 @@ export default function DropboxUploadModal({
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-header">
-          <h2>Salvar no Dropbox</h2>
+          <h2>Compartilhar Vídeo</h2>
           {status !== 'uploading' && status !== 'generating' && (
              <button className="btn btn-secondary" onClick={onClose}>✕</button>
           )}
         </div>
         
         <div className="modal-body" style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+          {status === 'metadata' && (
+            <div style={{ textAlign: 'left', maxWidth: '400px', margin: '0 auto' }}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Título do Vídeo:</label>
+                <input 
+                  type="text" 
+                  value={title} 
+                  onChange={(e) => setTitle(e.target.value)} 
+                  placeholder="Ex: Minha Gameplay Épica"
+                  style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff' }}
+                />
+              </div>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Privacidade:</label>
+                <select 
+                  value={isPublic ? 'true' : 'false'} 
+                  onChange={(e) => setIsPublic(e.target.value === 'true')}
+                  style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff' }}
+                >
+                  <option value="true">Público (Qualquer um com o link)</option>
+                  <option value="false">Não Listado (Apenas quem tem o link)</option>
+                </select>
+              </div>
+              <button className="btn btn-primary" style={{ width: '100%', padding: '1rem', backgroundColor: '#0061FE' }} onClick={handleStart}>
+                Iniciar Upload
+              </button>
+            </div>
+          )}
+
           {status === 'connecting' && (
             <div>
               <div className="loading-spinner" style={{ margin: '0 auto 1rem', borderColor: 'rgba(255,255,255,0.2)', borderTopColor: '#0061FE' }} />

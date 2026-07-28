@@ -2,21 +2,21 @@ import { useState, useEffect } from 'react';
 import UploadScreen from './components/UploadScreen';
 import VideoEditor from './components/VideoEditor';
 import WatchScreen from './components/WatchScreen';
+import ClipsFeed from './components/ClipsFeed';
 import { useFFmpeg } from './hooks/useFFmpeg';
 
 function App() {
   const [videoFile, setVideoFile] = useState(null);
   
-  // Roteamento simples via query parameters
-  const [watchParams, setWatchParams] = useState(null);
+  // Roteamento para Tela de Watch via ID do Firestore
+  const [watchId, setWatchId] = useState(null);
   
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const watchPath = params.get('watch');
-    const rlkey = params.get('rlkey');
-    
-    if (watchPath && rlkey) {
-      setWatchParams({ path: watchPath, rlkey });
+    const path = window.location.pathname;
+    if (path.startsWith('/clips/watch/')) {
+      const id = path.split('/clips/watch/')[1];
+      // Mesmo se for vazio, definimos para engatilhar a tela de Watch (que mostrará o erro)
+      setWatchId(id || '');
     }
   }, []);
 
@@ -45,8 +45,8 @@ function App() {
     setVideoFile(file);
     window.history.pushState({}, '', '/editor');
     // Limpa a rota watch ao fazer upload de um vídeo novo
-    if (watchParams) {
-       setWatchParams(null);
+    if (watchId) {
+       setWatchId(null);
     }
   }
 
@@ -57,11 +57,15 @@ function App() {
   
   function handleBackFromWatch() {
     window.history.pushState({}, '', '/');
-    setWatchParams(null);
+    setWatchId(null);
   }
 
-  if (watchParams && !videoFile) {
-    return <WatchScreen path={watchParams.path} rlkey={watchParams.rlkey} onBack={handleBackFromWatch} />;
+  if (watchId !== null && !videoFile) {
+    return <WatchScreen clipId={watchId} onBack={handleBackFromWatch} />;
+  }
+
+  if (window.location.pathname === '/clips' || window.location.pathname === '/clips/') {
+    return <ClipsFeed onBack={handleBackFromWatch} />;
   }
 
   if (!videoFile) {
