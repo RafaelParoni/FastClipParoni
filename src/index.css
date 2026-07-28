@@ -1165,4 +1165,420 @@ p {
   }
 }
 
+/* Audio Track UI */
+.audio-track-area {
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
 
+.audio-track-area h3 {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: var(--space-xs);
+}
+
+.audio-track-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.audio-active-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.audio-active-controls .file-name {
+  font-size: 13px;
+  color: var(--text-accent);
+  background: var(--bg-tertiary);
+  padding: 4px 12px;
+  border-radius: var(--radius-md);
+  max-width: 200px;
+  text-transform: uppercase;
+}
+
+.social-links {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.social-links a,
+.social-links-header a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: all 0.2s;
+  border-radius: 8px;
+  background: var(--bg-glass);
+}
+
+.social-links a:hover,
+.social-links-header a:hover {
+  color: #fff;
+  background: var(--accent-primary);
+  box-shadow: 0 0 10px rgba(76, 181, 255, 0.4);
+}
+
+.social-links-header {
+  display: flex;
+  gap: 0.5rem;
+  margin-right: 1rem;
+  align-items: center;
+}
+
+/* ========== Responsive Utilities ========== */
+.mobile-only {
+  display: none !important;
+}
+
+/* ========== Responsive / Mobile Styles ========== */
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+  .mobile-only {
+    display: flex !important;
+  }
+  /* Upload Screen */
+  .upload-screen {
+    padding: var(--space-md);
+    gap: var(--space-lg);
+  }
+  
+  .upload-screen .logo-area h1 {
+    font-size: 2rem;
+  }
+  
+  .upload-screen .logo-area p {
+    font-size: 0.95rem;
+  }
+  
+  .upload-zone {
+    padding: var(--space-xl) var(--space-md);
+  }
+  
+  .upload-zone h3 {
+    font-size: 1.1rem;
+  }
+
+  /* Editor Layout */
+  .editor-header {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    justify-content: center;
+    padding: var(--space-sm);
+  }
+
+  .editor-header .file-name {
+    display: none;
+  }
+
+  .editor-header .header-actions {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .social-links-header {
+    margin-right: 0;
+  }
+
+  /* Stack main content and sidebar */
+  .editor-body {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .editor-main {
+    flex: none;
+  }
+  
+  .video-container {
+    min-height: 250px;
+    height: 40vh;
+  }
+
+  /* Controls & Timeline */
+  .video-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: var(--space-sm);
+    gap: var(--space-sm);
+  }
+
+  .time-inputs {
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: var(--space-sm);
+  }
+  
+  .create-clip-area {
+    flex-direction: column;
+    margin-top: var(--space-lg);
+  }
+  
+  .create-clip-area .btn {
+    width: 100%;
+  }
+
+  /* Sidebar */
+  .clip-sidebar {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border-subtle);
+    flex: none;
+  }
+
+  .clip-list {
+    max-height: 500px;
+  }
+
+  /* WatchScreen Adjustments */
+  .editor-main > div[style*="marginTop"] {
+    flex-direction: column !important;
+  }
+  
+  .editor-main > div[style*="marginTop"] > .btn,
+  .editor-main > div[style*="marginTop"] > a {
+    width: 100% !important;
+    min-width: unset !important;
+  }
+}
+
+/* Audio Track UI */
+.audio-track-area {
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.audio-track-area h3 {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: var(--space-xs);
+}
+
+.audio-track-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.audio-active-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.audio-active-controls .file-name {
+  font-size: 13px;
+  color: var(--text-accent);
+  background: var(--bg-tertiary);
+  padding: 4px 12px;
+  border-radius: var(--radius-md);
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upload-audio-btn {
+  font-size: 13px;
+  padding: 8px 16px;
+  cursor: pointer;
+  display: inline-block;
+  margin: 0;
+}
+
+.audio-trim-controls label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  display: block;
+}
+
+.audio-trim-controls input {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-glass);
+  color: var(--text-primary);
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 12px;
+}
+
+/* NLE Timeline Layout */
+.timeline-layout {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.timeline-headers {
+  width: 140px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.timeline-tracks-area {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.track-row {
+  display: flex;
+  height: 50px; /* Fixed height to match sliders */
+  margin-bottom: 4px;
+  align-items: center;
+}
+.track-header {
+  height: 50px;
+  background: var(--bg-surface);
+  border-radius: 4px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.track-header label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-grow: 1;
+}
+.track-volume-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.vertical-slider {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  height: 40px;
+  width: 8px;
+}
+.volume-percent {
+  font-size: 10px;
+  color: var(--text-muted);
+  width: 28px;
+  text-align: right;
+}
+.delete-track-btn {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 4px;
+  opacity: 0.9;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+.delete-track-btn:hover {
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.3);
+}
+.track-content {
+  flex-grow: 1;
+  position: relative;
+  background: var(--bg-surface);
+  border-radius: 4px;
+  height: 50px;
+}
+
+/* Timeline Audio Tracks */
+.timeline-selection.split-video-selection {
+  background: linear-gradient(to bottom, rgba(76, 181, 255, 0.25) 50%, rgba(245, 158, 11, 0.25) 50%);
+  border: 1px solid var(--accent-primary);
+  border-bottom-color: var(--warning);
+}
+.timeline-track.audio-track {
+  height: 24px;
+  margin-top: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  position: relative;
+  overflow: hidden;
+}
+
+.timeline-selection.original-audio-selection {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: var(--success);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+}
+
+.timeline-selection.extra-audio-selection {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: var(--warning);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+}
+
+.track-label {
+  font-size: 11px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Drag Overlay */
+.drag-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drag-content {
+  border: 4px dashed var(--primary);
+  border-radius: 20px;
+  padding: 60px 100px;
+  background: rgba(59, 130, 246, 0.1);
+  text-align: center;
+  pointer-events: none;
+}
+
+.drag-content h2 {
+  color: #fff;
+  font-size: 2.5rem;
+  margin: 0;
+}

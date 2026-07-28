@@ -1,4 +1,43 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import useVideoFrames from '../hooks/useVideoFrames';
+import useAudioWaveform from '../hooks/useAudioWaveform';
+
+function AudioTrackContent({ track, index, getPositionPercent, handleMouseDown, dragState }) {
+  const { waveformUrl } = useAudioWaveform(track.file, 'rgba(253, 224, 71, 0.8)');
+  
+  return (
+    <div className="track-row">
+      <div className="track-content audio-track">
+        <div 
+          className="timeline-selection extra-audio-selection" 
+          style={{ 
+            left: `${getPositionPercent(track.offset)}%`, 
+            width: `${getPositionPercent(track.trimEnd - track.trimStart)}%`,
+            height: '100%',
+            top: 0,
+            cursor: 'grab',
+            backgroundImage: waveformUrl ? `url(${waveformUrl})` : 'none',
+            backgroundSize: '100% 100%',
+            backgroundRepeat: 'no-repeat'
+          }}
+          onMouseDown={(e) => handleMouseDown(e, 'audio-move', track.id)}
+        >
+          <span className="track-label" style={{ background: 'rgba(0,0,0,0.5)', padding: '2px 4px', borderRadius: '4px' }} title={track.file.name}>🎵 {track.file.name}</span>
+          <div
+            className={`timeline-handle handle-start ${dragState?.type === 'audio-start' && dragState?.trackId === track.id ? 'dragging' : ''}`}
+            style={{ left: 0 }}
+            onMouseDown={(e) => handleMouseDown(e, 'audio-start', track.id)}
+          />
+          <div
+            className={`timeline-handle handle-end ${dragState?.type === 'audio-end' && dragState?.trackId === track.id ? 'dragging' : ''}`}
+            style={{ left: '100%' }}
+            onMouseDown={(e) => handleMouseDown(e, 'audio-end', track.id)}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Timeline({
   duration,
@@ -8,9 +47,21 @@ export default function Timeline({
   onClipStartChange,
   onClipEndChange,
   onSeek,
+  audioTracks = [],
+  onAudioLeftDrag,
+  onAudioRightDrag,
+  onAudioOffsetChange,
+  videoVolume,
+  onVideoVolumeChange,
+  onRemoveAudioTrack,
+  onUpdateAudioTrack,
+  videoFile,
+  onAddAudioTrack,
 }) {
   const trackRef = useRef(null);
-  const [dragging, setDragging] = useState(null); // 'start' | 'end' | 'playhead' | null
+  const [dragState, setDragState] = useState(null);
+
+  const { frames } = useVideoFrames(videoFile, 15);
 
   const getPositionPercent = useCallback((time) => {
     if (!duration) return 0;
@@ -24,37 +75,70 @@ export default function Timeline({
     return percent * duration;
   }, [duration]);
 
-  const handleMouseDown = useCallback((e, type) => {
+  const handleMouseDown = useCallback((e, type, trackId = null) => {
     e.preventDefault();
     e.stopPropagation();
-    setDragging(type);
-  }, []);
+    const time = getTimeFromPosition(e.clientX);
+    const track = trackId ? audioTracks.find(t => t.id === trackId) : null;
+    setDragState({
+      type,
+      trackId,
+      initialTime: time,
+      initialClipStart: clipStart,
+      initialClipEnd: clipEnd,
+      initialAudioOffset: track ? track.offset : 0
+    });
+  }, [getTimeFromPosition, clipStart, clipEnd, audioTracks]);
 
   const handleTrackClick = useCallback((e) => {
-    if (dragging) return;
+    if (dragState) return;
     const time = getTimeFromPosition(e.clientX);
     onSeek(time);
-  }, [dragging, getTimeFromPosition, onSeek]);
+  }, [dragState, getTimeFromPosition, onSeek]);
 
   useEffect(() => {
-    if (!dragging) return;
+    if (!dragState) return;
 
     function handleMouseMove(e) {
       const time = getTimeFromPosition(e.clientX);
 
-      if (dragging === 'start') {
+      if (dragState.type === 'start') {
         const newStart = Math.max(0, Math.min(time, clipEnd - 0.5));
         onClipStartChange(newStart);
-      } else if (dragging === 'end') {
+      } else if (dragState.type === 'end') {
         const newEnd = Math.min(duration, Math.max(time, clipStart + 0.5));
         onClipEndChange(newEnd);
-      } else if (dragging === 'playhead') {
+      } else if (dragState.type === 'playhead') {
         onSeek(Math.max(0, Math.min(duration, time)));
+      } else if (dragState.type === 'audio-start') {
+        if (onAudioLeftDrag) onAudioLeftDrag(dragState.trackId, time);
+      } else if (dragState.type === 'audio-end') {
+        if (onAudioRightDrag) onAudioRightDrag(dragState.trackId, time);
+      } else if (dragState.type === 'video-move') {
+        const delta = time - dragState.initialTime;
+        const clipDuration = dragState.initialClipEnd - dragState.initialClipStart;
+        let newStart = dragState.initialClipStart + delta;
+        let newEnd = dragState.initialClipEnd + delta;
+        if (newStart < 0) {
+          newStart = 0;
+          newEnd = clipDuration;
+        }
+        if (newEnd > duration) {
+          newEnd = duration;
+          newStart = duration - clipDuration;
+        }
+        onClipStartChange(newStart);
+        onClipEndChange(newEnd);
+      } else if (dragState.type === 'audio-move') {
+        const delta = time - dragState.initialTime;
+        let newOffset = dragState.initialAudioOffset + delta;
+        if (newOffset < 0) newOffset = 0;
+        if (onAudioOffsetChange) onAudioOffsetChange(dragState.trackId, newOffset);
       }
     }
 
     function handleMouseUp() {
-      setDragging(null);
+      setDragState(null);
     }
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -64,7 +148,7 @@ export default function Timeline({
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [dragging, clipStart, clipEnd, duration, getTimeFromPosition, onClipStartChange, onClipEndChange, onSeek]);
+  }, [dragState, clipStart, clipEnd, duration, getTimeFromPosition, onClipStartChange, onClipEndChange, onSeek, onAudioLeftDrag, onAudioRightDrag, onAudioOffsetChange]);
 
   const clipDuration = clipEnd - clipStart;
 
@@ -101,47 +185,111 @@ export default function Timeline({
         </div>
       </div>
 
-      <div
-        className="timeline-track-wrapper"
-        ref={trackRef}
-        onClick={handleTrackClick}
-      >
-        <div className="timeline-track">
-          {/* Current progress */}
-          <div
-            className="timeline-progress"
-            style={{ width: `${getPositionPercent(currentTime)}%` }}
-          />
+      <div className="timeline-layout">
+        {/* Track Headers (Left Column) */}
+        <div className="timeline-headers">
+          <div className="track-header">
+            <label title="Clip">🎬 Clip</label>
+            <div className="track-volume-container">
+              <span className="volume-percent">{Math.round(videoVolume * 100)}%</span>
+              <input type="range" min="0" max="1" step="0.01" value={videoVolume} onChange={onVideoVolumeChange} className="vertical-slider" />
+            </div>
+          </div>
+          
+          {audioTracks.map((track, index) => (
+            <div key={track.id} className="track-header">
+              <button className="delete-track-btn" onClick={() => onRemoveAudioTrack(track.id)}>Remover</button>
+              <label title={track.file.name}>🎵 Áudio {index + 1}</label>
+              <div className="track-volume-container">
+                <span className="volume-percent">{Math.round(track.volume * 100)}%</span>
+                <input type="range" min="0" max="1" step="0.01" value={track.volume} onChange={(e) => onUpdateAudioTrack(track.id, { volume: parseFloat(e.target.value) })} className="vertical-slider" />
+              </div>
+            </div>
+          ))}
 
-          {/* Selection range */}
-          <div
-            className="timeline-selection"
-            style={{
-              left: `${getPositionPercent(clipStart)}%`,
-              width: `${getPositionPercent(clipEnd) - getPositionPercent(clipStart)}%`,
-            }}
-          />
+          {/* Empty header for Add Audio Row */}
+          {audioTracks.length < 5 && (
+            <div className="track-header" style={{ border: 'none', background: 'transparent' }}>
+            </div>
+          )}
+        </div>
 
-          {/* Playhead */}
-          <div
-            className="timeline-playhead"
-            style={{ left: `${getPositionPercent(currentTime)}%` }}
-            onMouseDown={(e) => handleMouseDown(e, 'playhead')}
-          />
+        {/* Timeline Tracks Area (Right Column) */}
+        <div className="timeline-tracks-area" ref={trackRef} onClick={handleTrackClick}>
+          {/* Video Track */}
+          <div className="track-row">
+            <div className="track-content video-track" style={{ display: 'flex', overflow: 'hidden' }}>
+              {frames.map((src, i) => (
+                <img key={i} src={src} alt="frame" style={{ flexGrow: 1, height: '100%', objectFit: 'cover', minWidth: 0, opacity: 0.6 }} />
+              ))}
+              <div className="timeline-progress" style={{ width: '100%', borderRadius: '15px' }} />
+              <div
+                className="timeline-selection split-video-selection"
+                style={{
+                  left: `${getPositionPercent(clipStart)}%`,
+                  width: `${getPositionPercent(clipEnd) - getPositionPercent(clipStart)}%`,
+                  cursor: 'grab'
+                }}
+                onMouseDown={(e) => handleMouseDown(e, 'video-move')}
+              />
+              <div
+                className="timeline-playhead"
+                style={{ left: `${getPositionPercent(currentTime)}%` }}
+                onMouseDown={(e) => handleMouseDown(e, 'playhead')}
+              />
+              <div
+                className={`timeline-handle handle-start ${dragState?.type === 'start' ? 'dragging' : ''}`}
+                style={{ left: `${getPositionPercent(clipStart)}%` }}
+                onMouseDown={(e) => handleMouseDown(e, 'start')}
+              />
+              <div
+                className={`timeline-handle handle-end ${dragState?.type === 'end' ? 'dragging' : ''}`}
+                style={{ left: `${getPositionPercent(clipEnd)}%` }}
+                onMouseDown={(e) => handleMouseDown(e, 'end')}
+              />
+            </div>
+          </div>
 
-          {/* Start handle */}
-          <div
-            className={`timeline-handle handle-start ${dragging === 'start' ? 'dragging' : ''}`}
-            style={{ left: `${getPositionPercent(clipStart)}%` }}
-            onMouseDown={(e) => handleMouseDown(e, 'start')}
-          />
+          {/* Extra Audio Tracks */}
+          {audioTracks.map((track, index) => (
+            <AudioTrackContent 
+              key={track.id} 
+              track={track} 
+              index={index} 
+              getPositionPercent={getPositionPercent} 
+              handleMouseDown={handleMouseDown} 
+              dragState={dragState} 
+            />
+          ))}
 
-          {/* End handle */}
-          <div
-            className={`timeline-handle handle-end ${dragging === 'end' ? 'dragging' : ''}`}
-            style={{ left: `${getPositionPercent(clipEnd)}%` }}
-            onMouseDown={(e) => handleMouseDown(e, 'end')}
-          />
+          {/* Add New Audio Track Row */}
+          {audioTracks.length < 5 && (
+            <div className="track-row">
+              <label 
+                className="track-content" 
+                style={{ 
+                  border: '2px dashed var(--border-subtle)', 
+                  background: 'rgba(255, 255, 255, 0.02)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  cursor: 'pointer',
+                  color: 'var(--text-muted)'
+                }}
+              >
+                <span>+ Adicionar ou arrastar um arquivo .mp3/.mp4</span>
+                <input 
+                  type="file" 
+                  accept="audio/*, video/mp4, video/quicktime" 
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) onAddAudioTrack(e.target.files[0]);
+                    e.target.value = '';
+                  }}
+                  style={{ display: 'none' }} 
+                />
+              </label>
+            </div>
+          )}
         </div>
       </div>
 

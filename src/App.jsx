@@ -20,19 +20,39 @@ function App() {
     }
   }, []);
 
+  useEffect(() => {
+    const handlePopState = () => {
+      // Se voltarmos e não tivermos mais a rota /editor (estamos em /), limpa o vídeo
+      if (window.location.pathname === '/' || window.location.pathname === '') {
+        setVideoFile(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Força redirecionamento para '/' se estiver em '/editor' sem arquivo de vídeo
+  useEffect(() => {
+    if (window.location.pathname === '/editor' && !videoFile) {
+      window.history.replaceState({}, '', '/');
+    }
+  }, [videoFile]);
+
   const ffmpeg = useFFmpeg();
 
   function handleVideoSelected(file) {
     setVideoFile(file);
+    window.history.pushState({}, '', '/editor');
     // Limpa a rota watch ao fazer upload de um vídeo novo
     if (watchParams) {
-       window.history.pushState({}, '', '/');
        setWatchParams(null);
     }
   }
 
   function handleBack() {
     setVideoFile(null);
+    window.history.pushState({}, '', '/');
   }
   
   function handleBackFromWatch() {

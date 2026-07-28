@@ -10,11 +10,129 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
   const videoRef = useRef(null);
   const [videoUrl] = useState(() => URL.createObjectURL(videoFile));
 
-  // Video state
+  // Video and Audio state
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [volume, setVolume] = useState(1);
+
+  const audioRefs = useRef({});
+  const [audioTracks, setAudioTracks] = useState([]);
+
+  const audioTracksRef = useRef(audioTracks);
+  useEffect(() => {
+    audioTracksRef.current = audioTracks;
+  }, [audioTracks]);
+
+  // Cleanup URLs on unmount
+  useEffect(() => {
+    return () => {
+      audioTracksRef.current.forEach(t => URL.revokeObjectURL(t.url));
+    };
+  }, []);
+
+  const addAudioTrack = useCallback((file) => {
+    setAudioTracks(prev => {
+      if (prev.length >= 5) {
+         alert("Limite máximo de 5 áudios extras atingido!");
+         return prev;
+      }
+      const newTrack = {
+        id: Date.now().toString(),
+        file,
+        url: URL.createObjectURL(file),
+        volume: 1,
+        offset: 0,
+        trimStart: 0,
+        trimEnd: 0,
+        duration: 0
+      };
+      return [...prev, newTrack];
+    });
+  }, []);
+
+  const removeAudioTrack = (id) => {
+    setAudioTracks(prev => {
+      const track = prev.find(t => t.id === id);
+      if (track) URL.revokeObjectURL(track.url);
+      return prev.filter(t => t.id !== id);
+    });
+    if (audioRefs.current[id]) {
+       delete audioRefs.current[id];
+    }
+  };
+
+  const updateAudioTrack = (id, updates) => {
+    setAudioTracks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+  };
+
+  // Sync volume for audio tracks
+  useEffect(() => {
+    audioTracks.forEach(track => {
+      const el = audioRefs.current[track.id];
+      if (el && el.volume !== track.volume) {
+        el.volume = track.volume;
+      }
+    });
+  }, [audioTracks]);
+
+  // Global Drag and Drop for Audio Tracks
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const dragCounter = useRef(0);
+
+  useEffect(() => {
+    const handleDragEnter = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounter.current += 1;
+      if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+        setIsDraggingOver(true);
+      }
+    };
+    
+    const handleDragLeave = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounter.current -= 1;
+      if (dragCounter.current === 0) {
+        setIsDraggingOver(false);
+      }
+    };
+    
+    const handleDragOver = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    
+    const handleDrop = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDraggingOver(false);
+      dragCounter.current = 0;
+      
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        const file = e.dataTransfer.files[0];
+        const isAudioOrMp4 = file.type.startsWith('audio/') || file.name.toLowerCase().endsWith('.mp4');
+        if (isAudioOrMp4) {
+          addAudioTrack(file);
+        } else {
+          alert('Por favor, arraste um arquivo de áudio ou .mp4 válido.');
+        }
+      }
+    };
+    
+    window.addEventListener('dragenter', handleDragEnter);
+    window.addEventListener('dragleave', handleDragLeave);
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('drop', handleDrop);
+    
+    return () => {
+      window.removeEventListener('dragenter', handleDragEnter);
+      window.removeEventListener('dragleave', handleDragLeave);
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('drop', handleDrop);
+    };
+  }, [addAudioTrack]);
 
   // Clip selection
   const [clipStart, setClipStart] = useState(0);
@@ -53,6 +171,27 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
     const video = videoRef.current;
     if (video) {
       setCurrentTime(video.currentTime);
+      
+      audioTracks.forEach(track => {
+          const aRef = audioRefs.current[track.id];
+          if (aRef) {
+              const expectedAudioTime = video.currentTime - track.offset + track.trimStart;
+              const isAudioActive = playing && (video.currentTime >= track.offset && expectedAudioTime <= track.trimEnd);
+              
+              if (isAudioActive) {
+                 // Se estiver pausado, ajusta o tempo exatamente e dá play
+                 if (aRef.paused) {
+                     aRef.currentTime = expectedAudioTime;
+                     aRef.play().catch(()=>{});
+                 } else if (Math.abs(aRef.currentTime - expectedAudioTime) > 0.5) {
+                     // Se desincronizar mais de 0.5s, força o seek (evita death spiral)
+                     aRef.currentTime = expectedAudioTime;
+                 }
+              } else {
+                 if (!aRef.paused) aRef.pause();
+              }
+          }
+      });
     }
   }
 
@@ -72,8 +211,42 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
     if (video) {
       video.currentTime = time;
       setCurrentTime(time);
+      audioTracks.forEach(track => {
+          const aRef = audioRefs.current[track.id];
+          if (aRef) {
+             const expectedAudioTime = time - track.offset + track.trimStart;
+             aRef.currentTime = Math.max(track.trimStart, Math.min(expectedAudioTime, track.trimEnd));
+          }
+      });
     }
   }
+
+  const handleAudioLeftDrag = useCallback((id, newOffset) => {
+      setAudioTracks(prev => prev.map(t => {
+         if (t.id !== id) return t;
+         const delta = newOffset - t.offset;
+         const newTrimStart = t.trimStart + delta;
+         if (newTrimStart >= 0 && newTrimStart < t.trimEnd - 0.1) {
+             return { ...t, offset: newOffset, trimStart: newTrimStart };
+         }
+         return t;
+      }));
+  }, []);
+
+  const handleAudioRightDrag = useCallback((id, time) => {
+      setAudioTracks(prev => prev.map(t => {
+         if (t.id !== id) return t;
+         const newTrimEnd = t.trimStart + (time - t.offset);
+         if (newTrimEnd > t.trimStart + 0.1 && newTrimEnd <= t.duration) {
+             return { ...t, trimEnd: newTrimEnd };
+         }
+         return t;
+      }));
+  }, []);
+  
+  const handleAudioOffsetChange = useCallback((id, newOffset) => {
+      updateAudioTrack(id, { offset: newOffset });
+  }, []);
 
   function handleVolumeChange(e) {
     const v = parseFloat(e.target.value);
@@ -89,16 +262,48 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
     if (!video) return;
 
     const onPlay = () => setPlaying(true);
-    const onPause = () => setPlaying(false);
+    const onPlaying = () => setPlaying(true);
+    
+    const onPause = () => {
+      setPlaying(false);
+      audioTracks.forEach(t => {
+        const aRef = audioRefs.current[t.id];
+        if (aRef && !aRef.paused) aRef.pause();
+      });
+    };
+
+    const onWaiting = () => {
+      // Quando o vídeo trava pra carregar (buffering)
+      audioTracks.forEach(t => {
+        const aRef = audioRefs.current[t.id];
+        if (aRef && !aRef.paused) aRef.pause();
+      });
+    };
+    
+    const onSeeking = () => {
+      audioTracks.forEach(track => {
+        const aRef = audioRefs.current[track.id];
+        if (aRef) {
+           const expectedAudioTime = video.currentTime - track.offset + track.trimStart;
+           aRef.currentTime = Math.max(track.trimStart, Math.min(expectedAudioTime, track.trimEnd));
+        }
+      });
+    };
 
     video.addEventListener('play', onPlay);
+    video.addEventListener('playing', onPlaying);
     video.addEventListener('pause', onPause);
+    video.addEventListener('waiting', onWaiting);
+    video.addEventListener('seeking', onSeeking);
 
     return () => {
       video.removeEventListener('play', onPlay);
+      video.removeEventListener('playing', onPlaying);
       video.removeEventListener('pause', onPause);
+      video.removeEventListener('waiting', onWaiting);
+      video.removeEventListener('seeking', onSeeking);
     };
-  }, []);
+  }, [audioTracks]);
 
   // Listen for Dropbox OAuth messages
   useEffect(() => {
@@ -132,7 +337,7 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
       }
 
       const name = `clip_${clipCounter}`;
-      const blob = await ffmpeg.createClip(videoFile, clipStart, clipEnd, name, true); // True força a marca d'água
+      const blob = await ffmpeg.createClip(videoFile, clipStart, clipEnd, name, true, audioTracks, volume); // True força a marca d'água
 
       const newClip = {
         id: Date.now().toString(),
@@ -149,7 +354,7 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
       console.error('Erro ao criar clip:', error);
       alert('Erro ao criar clip. Tente novamente.');
     }
-  }, [clipStart, clipEnd, clipCounter, videoFile, ffmpeg]);
+  }, [clipStart, clipEnd, clipCounter, videoFile, ffmpeg, audioTracks, volume]);
 
   // Download single clip
   function handleDownloadClip(clip) {
@@ -351,7 +556,7 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
             />
           </div>
 
-          {/* Controls */}
+          {/* Controls are now partially handled inside the timeline header */}
           <div className="video-controls">
             <button className="play-btn" onClick={togglePlay}>
               {playing ? '⏸' : '▶'}
@@ -359,18 +564,6 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
             <span className="time-display">
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
-            <div className="volume-control">
-              <span>{volume > 0 ? '🔊' : '🔇'}</span>
-              <input
-                type="range"
-                className="volume-slider"
-                min="0"
-                max="1"
-                step="0.05"
-                value={volume}
-                onChange={handleVolumeChange}
-              />
-            </div>
           </div>
 
           {/* Timeline */}
@@ -382,7 +575,34 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
             onClipStartChange={setClipStart}
             onClipEndChange={setClipEnd}
             onSeek={handleSeek}
+            audioTracks={audioTracks}
+            onAudioLeftDrag={handleAudioLeftDrag}
+            onAudioRightDrag={handleAudioRightDrag}
+            onAudioOffsetChange={handleAudioOffsetChange}
+            videoVolume={volume}
+            onVideoVolumeChange={handleVolumeChange}
+            onRemoveAudioTrack={removeAudioTrack}
+            onUpdateAudioTrack={updateAudioTrack}
+            videoFile={videoFile}
+            onAddAudioTrack={addAudioTrack}
           />
+
+          {/* Add Audio Button Area (now mostly handled in Timeline) */}
+          <div className="audio-track-area">
+             {/* Hidden audio players for playback sync */}
+             {audioTracks.map(track => (
+                <audio 
+                  key={track.id} 
+                  ref={el => audioRefs.current[track.id] = el} 
+                  src={track.url}
+                  onLoadedMetadata={(e) => {
+                     if (track.duration === 0) {
+                        updateAudioTrack(track.id, { duration: e.target.duration, trimEnd: e.target.duration });
+                     }
+                  }}
+                />
+             ))}
+          </div>
 
           {/* Create clip button */}
           <div className="create-clip-area">
@@ -466,6 +686,15 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
         <div className="loading-overlay">
           <div className="loading-spinner" />
           <p>Empacotando clips em ZIP...</p>
+        </div>
+      )}
+
+      {/* Drag Overlay */}
+      {isDraggingOver && (
+        <div className="drag-overlay">
+          <div className="drag-content">
+            <h2>Solte o arquivo para adicionar a faixa de áudio</h2>
+          </div>
         </div>
       )}
     </div>

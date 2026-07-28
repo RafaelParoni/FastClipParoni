@@ -56,7 +56,7 @@ export function useFFmpeg() {
     return promise;
   }, [loaded]);
 
-  const createClip = useCallback(async (videoFile, startTime, endTime, clipName, useWatermark = false) => {
+  const createClip = useCallback(async (videoFile, startTime, endTime, clipName, useWatermark = false, audioTracks = [], videoVolume = 1) => {
     if (!ffmpegRef.current) {
       throw new Error('FFmpeg não carregado');
     }
@@ -67,60 +67,128 @@ export function useFFmpeg() {
     setProcessingMessage(`Criando clip "${clipName}"...`);
 
     try {
-      console.log(`Mounting input file via WORKERFS: ${videoFile.name} (${(videoFile.size / 1024 / 1024).toFixed(1)}MB)`);
+      console.log(`Mounting input files via WORKERFS`);
       
-      // Criar diretório de trabalho se não existir
       try {
         await ffmpeg.createDir('/work');
       } catch (e) {
-        // Ignorar se já existir
+        // Ignorar
       }
 
-      // Montar o arquivo original sem carregar para a memória RAM!
-      // Isso permite que o FFmpeg leia o arquivo de 3.4GB+ sob demanda.
-      await ffmpeg.mount('WORKERFS', { files: [videoFile] }, '/work');
+      const mountFiles = [videoFile];
+      audioTracks.forEach(track => mountFiles.push(track.file));
       
-      // O arquivo estará disponível com o nome original dele dentro de /work
+      await ffmpeg.mount('WORKERFS', { files: mountFiles }, '/work');
+      
       const inputName = `/work/${videoFile.name}`;
       const outputName = clipName + '.mp4';
-
       const duration = endTime - startTime;
-      console.log(`Creating clip: ${startTime.toFixed(2)}s -> ${endTime.toFixed(2)}s (${duration.toFixed(2)}s). Watermark: ${useWatermark}`);
 
       let ffmpegArgs = [];
+      let filters = [];
+      let nextInputIndex = 1;
+      let watermarkInputIndex = -1;
 
+      ffmpegArgs.push('-ss', String(startTime), '-i', inputName);
+      
       if (useWatermark) {
-        // Fetch and write the watermark image to FFmpeg filesystem
         const res = await fetch(watermarkImg);
         const buf = await res.arrayBuffer();
         await ffmpeg.writeFile('watermark.png', new Uint8Array(buf));
-        
-        setProcessingMessage(`Cortando vídeo...`);
-        
-        ffmpegArgs = [
-          '-ss', String(startTime),
-          '-i', inputName,
-          '-i', 'watermark.png',
-          '-t', String(duration),
-          '-filter_complex', '[1:v]scale=-1:60[wm];[0:v][wm]overlay=W-w-20:H-h-20', // Scale to 60px height, bottom right
-          '-c:v', 'libx264',
-          '-preset', 'ultrafast',
-          '-c:a', 'copy',
-          '-avoid_negative_ts', 'make_zero',
-          '-y',
-          outputName
-        ];
+        ffmpegArgs.push('-i', 'watermark.png');
+        watermarkInputIndex = nextInputIndex++;
+        setProcessingMessage(`Processando vídeo com marca d'água...`);
       } else {
-        ffmpegArgs = [
-          '-ss', String(startTime),
-          '-i', inputName,
-          '-t', String(duration),
-          '-c', 'copy',
-          '-avoid_negative_ts', 'make_zero',
-          '-y',
-          outputName
-        ];
+        setProcessingMessage(`Processando vídeo...`);
       }
+      
+      const validAudioInputs = [];
+      
+      audioTracks.forEach(track => {
+          const relativeStart = track.offset - startTime;
+          let actualAudioTrimStart = track.trimStart;
+          let delayMs = 0;
+          let audioDurationToRead = 0;
+
+          if (relativeStart < duration) {
+              if (relativeStart > 0) {
+                  delayMs = Math.round(relativeStart * 1000);
+                  actualAudioTrimStart = track.trimStart;
+              } else {
+                  actualAudioTrimStart = track.trimStart + Math.abs(relativeStart);
+              }
+              audioDurationToRead = track.trimEnd - actualAudioTrimStart;
+              if (audioDurationToRead > 0) {
+                  ffmpegArgs.push('-ss', String(actualAudioTrimStart), '-t', String(audioDurationToRead), '-i', `/work/${track.file.name}`);
+                  validAudioInputs.push({
+                      index: nextInputIndex++,
+                      track,
+                      delayMs
+                  });
+              }
+          }
+      });
+      
+      const needsVideoFilter = useWatermark;
+      const needsAudioFilter = validAudioInputs.length > 0 || videoVolume !== 1;
+      
+      if (needsVideoFilter || needsAudioFilter) {
+         let outV = '0:v';
+         let outA = '0:a';
+         
+         if (needsVideoFilter) {
+            filters.push(`[${watermarkInputIndex}:v]scale=-1:60[wm];[0:v][wm]overlay=W-w-20:H-h-20[vout]`);
+            outV = '[vout]';
+         }
+         
+         if (needsAudioFilter) {
+            let mixInputs = [];
+            
+            if (videoVolume > 0) {
+               filters.push(`[0:a]volume=${videoVolume}[orig_a]`);
+               mixInputs.push('[orig_a]');
+            }
+            
+            validAudioInputs.forEach((input, i) => {
+               let filterChain = `[${input.index}:a]volume=${input.track.volume}`;
+               if (input.delayMs > 0) {
+                   filterChain += `,adelay=${input.delayMs}|all=1`;
+               }
+               const outLabel = `[a_new_${i}]`;
+               filters.push(`${filterChain}${outLabel}`);
+               mixInputs.push(outLabel);
+            });
+            
+            if (mixInputs.length > 1) {
+                filters.push(`${mixInputs.join('')}amix=inputs=${mixInputs.length}:duration=longest[aout]`);
+                outA = '[aout]';
+            } else if (mixInputs.length === 1) {
+                outA = mixInputs[0];
+            } else {
+                outA = null; // Everything muted
+            }
+         }
+         
+         if (filters.length > 0) {
+            ffmpegArgs.push('-filter_complex', filters.join(';'));
+         }
+         
+         ffmpegArgs.push('-map', outV);
+         if (outA !== null) {
+            ffmpegArgs.push('-map', outA);
+         }
+         
+         ffmpegArgs.push('-c:v', needsVideoFilter ? 'libx264' : 'copy');
+         if (needsVideoFilter) ffmpegArgs.push('-preset', 'ultrafast');
+         
+         if (outA !== null) {
+            ffmpegArgs.push('-c:a', 'aac');
+         }
+      } else {
+         ffmpegArgs.push('-c', 'copy');
+      }
+      
+      ffmpegArgs.push('-t', String(duration), '-avoid_negative_ts', 'make_zero', '-y', outputName);
 
       await ffmpeg.exec(ffmpegArgs);
 
@@ -134,9 +202,7 @@ export function useFFmpeg() {
         await ffmpeg.deleteFile(outputName);
         if (useWatermark) await ffmpeg.deleteFile('watermark.png');
         await ffmpeg.unmount('/work');
-      } catch (e) {
-        // Ignore cleanup errors
-      }
+      } catch (e) { }
 
       return blob;
     } catch (error) {
