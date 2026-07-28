@@ -507,7 +507,7 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
              
              // Transforma o link compartilhável do Dropbox em um link direto (raw)
              // Ex: https://www.dropbox.com/scl/fi/xyz/arquivo.mp4?rlkey=abc&dl=0 -> https://dl.dropboxusercontent.com/scl/fi/xyz/arquivo.mp4?rlkey=abc&raw=1
-             const rawUrl = shareData.url.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('dl=0', 'raw=1');
+             let rawUrl = shareData.url.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('dl=0', 'raw=1');
              if (!rawUrl.includes('raw=1')) {
                 // if it didn't have dl=0
                 rawUrl += '&raw=1';
