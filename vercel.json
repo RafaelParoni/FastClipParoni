@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/clips/watch/(.*)",
+      "destination": "/api/watch?id=$1"
+    },
+    {
       "source": "/v/(.*)",
       "destination": "/api/v?path=$1"
     },
