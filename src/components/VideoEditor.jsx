@@ -416,7 +416,13 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
     setDropboxModalState({ isOpen: true, status: 'metadata', progress: 0, link: '', errorMessage: '' });
   };
 
-  const startDropboxUploadFlow = (title, isPublic) => {
+  const startDropboxUploadFlow = (title, isPublic, game) => {
+    pendingDropboxClipRef.current = { 
+      ...pendingDropboxClipRef.current, 
+      title, 
+      isPublic,
+      game 
+    };
     pendingUploadMetadataRef.current = { title, isPublic };
     const clientId = import.meta.env.VITE_DROPBOX_CLIENT_ID;
     const token = localStorage.getItem('dropbox_token');
@@ -526,20 +532,23 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
              // Generate Thumbnail
              let thumbnailBase64 = null;
              try {
-               thumbnailBase64 = await generateThumbnail(pendingDropboxClipRef.current.blob);
+                thumbnailBase64 = await generateThumbnail(clip.blob);
              } catch (e) {
                console.warn("Could not generate thumbnail");
              }
 
              // Salvar no Firestore
-             const { title, isPublic } = pendingUploadMetadataRef.current;
-             const docRef = await addDoc(collection(db, "clips"), {
-               title,
-               privacy: isPublic,
+             const docRef = await addDoc(collection(db, 'clips'), {
+               title: clip.title,
+               privacy: clip.isPublic,
                url: rawUrl,
                thumbnail: thumbnailBase64,
                createdAt: new Date().toISOString(),
-               ip
+               ip,
+               gameName: clip.game?.name || null,
+               gameId: clip.game?.id || null,
+               gameBoxArt: clip.game?.boxArt || null,
+               duration: clip.duration || null,
              });
              
              // Gera o link da aplicação usando o ID do Firestore

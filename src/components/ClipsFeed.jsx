@@ -10,6 +10,12 @@ export default function ClipsFeed({ onBack }) {
   const [myClipsPage, setMyClipsPage] = useState(1);
   const [publicClipsPage, setPublicClipsPage] = useState(1);
   
+  // Filtros
+  const [sortOrder, setSortOrder] = useState('newest');
+  const [dateStart, setDateStart] = useState('');
+  const [dateEnd, setDateEnd] = useState('');
+  const [selectedGame, setSelectedGame] = useState('Todos');
+  
   const MY_CLIPS_PER_PAGE = 10;
   const PUBLIC_CLIPS_PER_PAGE = 15;
 
@@ -68,11 +74,46 @@ export default function ClipsFeed({ onBack }) {
     window.location.href = `/clips/watch/${id}`;
   };
 
-  const totalMyPages = Math.ceil(myClips.length / MY_CLIPS_PER_PAGE);
-  const currentMyClips = myClips.slice((myClipsPage - 1) * MY_CLIPS_PER_PAGE, myClipsPage * MY_CLIPS_PER_PAGE);
+  // Cálculo de jogos disponíveis
+  const allClips = [...myClips, ...publicClips];
+  const availableGames = ['Todos', ...new Set(allClips.map(c => c.gameName || 'Desconhecido'))];
 
-  const totalPublicPages = Math.ceil(publicClips.length / PUBLIC_CLIPS_PER_PAGE);
-  const currentPublicClips = publicClips.slice((publicClipsPage - 1) * PUBLIC_CLIPS_PER_PAGE, publicClipsPage * PUBLIC_CLIPS_PER_PAGE);
+  // Função central de filtragem e ordenação
+  const filterAndSortClips = (clips) => {
+    let filtered = [...clips];
+    
+    if (selectedGame !== 'Todos') {
+      filtered = filtered.filter(c => (c.gameName || 'Desconhecido') === selectedGame);
+    }
+    if (dateStart) {
+      const start = new Date(dateStart).getTime();
+      filtered = filtered.filter(c => new Date(c.createdAt).getTime() >= start);
+    }
+    if (dateEnd) {
+      const end = new Date(dateEnd);
+      end.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(c => new Date(c.createdAt).getTime() <= end.getTime());
+    }
+    
+    filtered.sort((a, b) => {
+      const timeA = new Date(a.createdAt).getTime();
+      const timeB = new Date(b.createdAt).getTime();
+      return sortOrder === 'newest' ? timeB - timeA : timeA - timeB;
+    });
+    
+    return filtered;
+  };
+
+  // Aplicação dos filtros
+  const filteredMyClips = filterAndSortClips(myClips);
+  const filteredPublicClips = filterAndSortClips(publicClips);
+
+  // Paginação com base nos resultados filtrados
+  const totalMyPages = Math.ceil(filteredMyClips.length / MY_CLIPS_PER_PAGE);
+  const currentMyClips = filteredMyClips.slice((myClipsPage - 1) * MY_CLIPS_PER_PAGE, myClipsPage * MY_CLIPS_PER_PAGE);
+
+  const totalPublicPages = Math.ceil(filteredPublicClips.length / PUBLIC_CLIPS_PER_PAGE);
+  const currentPublicClips = filteredPublicClips.slice((publicClipsPage - 1) * PUBLIC_CLIPS_PER_PAGE, publicClipsPage * PUBLIC_CLIPS_PER_PAGE);
 
   return (
     <div className="editor-layout" style={{ display: 'block', overflowY: 'auto' }}>
@@ -100,6 +141,82 @@ export default function ClipsFeed({ onBack }) {
       <div className="feed-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
         <h1 style={{ color: '#fff', fontSize: '2.5rem', marginBottom: '2rem', textAlign: 'center' }}>Galeria de Clipes</h1>
 
+        {/* Painel de Filtros */}
+        <div style={{ 
+          background: 'rgba(255, 255, 255, 0.05)', 
+          padding: '1.5rem', 
+          borderRadius: '12px', 
+          marginBottom: '2.5rem',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '1.5rem',
+          alignItems: 'flex-end'
+        }}>
+          <div style={{ flex: '1 1 200px' }}>
+            <label style={{ display: 'block', color: '#a0a0a0', marginBottom: '0.5rem', fontSize: '0.9rem' }}>🎮 Filtrar por Jogo:</label>
+            <select 
+              value={selectedGame} 
+              onChange={(e) => { setSelectedGame(e.target.value); setMyClipsPage(1); setPublicClipsPage(1); }}
+              style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff' }}
+            >
+              {availableGames.map(game => (
+                <option key={game} value={game}>{game}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ flex: '1 1 200px' }}>
+            <label style={{ display: 'block', color: '#a0a0a0', marginBottom: '0.5rem', fontSize: '0.9rem' }}>📅 Ordenação:</label>
+            <select 
+              value={sortOrder} 
+              onChange={(e) => { setSortOrder(e.target.value); setMyClipsPage(1); setPublicClipsPage(1); }}
+              style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff' }}
+            >
+              <option value="newest">Mais Novos Primeiro</option>
+              <option value="oldest">Mais Antigos Primeiro</option>
+            </select>
+          </div>
+
+          <div style={{ flex: '2 1 300px', display: 'flex', gap: '1rem' }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', color: '#a0a0a0', marginBottom: '0.5rem', fontSize: '0.9rem' }}>De:</label>
+              <input 
+                type="date" 
+                value={dateStart} 
+                onChange={(e) => { setDateStart(e.target.value); setMyClipsPage(1); setPublicClipsPage(1); }}
+                style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff', colorScheme: 'dark' }}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', color: '#a0a0a0', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Até:</label>
+              <input 
+                type="date" 
+                value={dateEnd} 
+                onChange={(e) => { setDateEnd(e.target.value); setMyClipsPage(1); setPublicClipsPage(1); }}
+                style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff', colorScheme: 'dark' }}
+              />
+            </div>
+          </div>
+          
+          <div style={{ flex: '0 0 auto' }}>
+            <button 
+              className="btn btn-secondary"
+              onClick={() => {
+                setSelectedGame('Todos');
+                setSortOrder('newest');
+                setDateStart('');
+                setDateEnd('');
+                setMyClipsPage(1);
+                setPublicClipsPage(1);
+              }}
+              style={{ padding: '0.8rem 1.5rem', height: '100%' }}
+            >
+              Limpar Filtros
+            </button>
+          </div>
+        </div>
+
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '4rem' }}>
              <div className="loading-spinner" />
@@ -108,7 +225,7 @@ export default function ClipsFeed({ onBack }) {
         ) : (
           <>
             {/* Meus Clips Section */}
-            {myClips.length > 0 && (
+            {filteredMyClips.length > 0 && (
               <section style={{ marginBottom: '4rem' }}>
                 <h2 style={{ color: '#4cb5ff', borderBottom: '2px solid rgba(76, 181, 255, 0.2)', paddingBottom: '0.5rem', marginBottom: '1.5rem' }}>
                   👤 Meus Clipes
@@ -121,6 +238,9 @@ export default function ClipsFeed({ onBack }) {
                       </div>
                       <div className="clip-card-info">
                         <h3>{clip.title}</h3>
+                        <p style={{ color: '#a0a0a0', fontSize: '0.8rem', marginBottom: '4px' }}>
+                          🎮 {clip.gameName || 'Desconhecido'}
+                        </p>
                         <p>{new Date(clip.createdAt).toLocaleDateString('pt-BR')}</p>
                         {!clip.privacy && <span className="badge badge-private">Não Listado</span>}
                         {clip.privacy && <span className="badge badge-public">Público</span>}
@@ -143,8 +263,8 @@ export default function ClipsFeed({ onBack }) {
               <h2 style={{ color: '#f59e0b', borderBottom: '2px solid rgba(245, 158, 11, 0.2)', paddingBottom: '0.5rem', marginBottom: '1.5rem' }}>
                 🌍 Explorar Clipes da Comunidade
               </h2>
-              {publicClips.length === 0 ? (
-                <p style={{ color: '#888' }}>Nenhum clipe público encontrado ainda. Seja o primeiro!</p>
+              {filteredPublicClips.length === 0 ? (
+                <p style={{ color: '#888' }}>Nenhum clipe público correspondente aos filtros foi encontrado.</p>
               ) : (
                 <div className="clip-grid">
                   {currentPublicClips.map(clip => (
@@ -154,6 +274,9 @@ export default function ClipsFeed({ onBack }) {
                       </div>
                       <div className="clip-card-info">
                         <h3>{clip.title}</h3>
+                        <p style={{ color: '#a0a0a0', fontSize: '0.8rem', marginBottom: '4px' }}>
+                          🎮 {clip.gameName || 'Desconhecido'}
+                        </p>
                         <p>{new Date(clip.createdAt).toLocaleDateString('pt-BR')}</p>
                       </div>
                     </div>

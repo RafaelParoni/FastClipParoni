@@ -134,7 +134,12 @@ export default function WatchScreen({ clipId, onBack }) {
       <div className="editor-body" style={{ alignItems: 'center', overflowY: 'auto', padding: '2rem 1rem' }}>
         <div className="editor-main" style={{ maxWidth: '900px', width: '100%', margin: 'auto' }}>
           
-          <h2 style={{ textAlign: 'center', color: '#fff', marginBottom: '1rem', fontSize: '1.8rem', fontWeight: 'bold' }}>{clipData.title}</h2>
+          <h2 style={{ textAlign: 'center', color: '#fff', marginBottom: '0.5rem', fontSize: '1.8rem', fontWeight: 'bold' }}>{clipData.title}</h2>
+          
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginBottom: '1.5rem', color: '#a0a0a0', fontSize: '0.95rem' }}>
+            {clipData.gameBoxArt && <img src={clipData.gameBoxArt} alt={clipData.gameName} style={{ width: '20px', height: '28px', borderRadius: '4px', objectFit: 'cover' }} />}
+            <span>🎮 Jogo: <strong style={{ color: '#fff', fontWeight: '500' }}>{clipData.gameName || 'Desconhecido'}</strong></span>
+          </div>
           
           <div className="video-container" style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.5)', height: 'auto', minHeight: 'auto', background: 'transparent' }}>
             <video

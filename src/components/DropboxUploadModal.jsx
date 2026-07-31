@@ -12,6 +12,52 @@ export default function DropboxUploadModal({
   const [title, setTitle] = useState('');
   const [isPublic, setIsPublic] = useState(true);
 
+  // Estados para busca de jogo
+  const [gameSearch, setGameSearch] = useState('');
+  const [gameResults, setGameResults] = useState([]);
+  const [selectedGame, setSelectedGame] = useState(null);
+  const [isSearchingGame, setIsSearchingGame] = useState(false);
+  const searchTimeoutRef = useRef(null);
+
+  const searchGames = async (query) => {
+    if (!query) {
+      setGameResults([]);
+      return;
+    }
+    setIsSearchingGame(true);
+    try {
+      const res = await fetch(`/api/twitch?q=${encodeURIComponent(query)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setGameResults(data.games || []);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar jogos', err);
+    } finally {
+      setIsSearchingGame(false);
+    }
+  };
+
+  const handleGameSearchChange = (e) => {
+    const val = e.target.value;
+    setGameSearch(val);
+    setSelectedGame(null); // Reseta a seleção se ele voltar a digitar
+    
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    searchTimeoutRef.current = setTimeout(() => {
+      searchGames(val);
+    }, 500); // Debounce de 500ms
+  };
+
+  const handleSelectGame = (game) => {
+    setSelectedGame(game);
+    setGameSearch(game.name);
+    setGameResults([]); // Esconde a lista
+  };
+
   const copyToClipboard = () => {
     if (linkInputRef.current) {
       linkInputRef.current.select();
@@ -25,7 +71,7 @@ export default function DropboxUploadModal({
       return;
     }
     if (onStartUpload) {
-      onStartUpload(title, isPublic);
+      onStartUpload(title, isPublic, selectedGame);
     }
   };
 
@@ -51,6 +97,53 @@ export default function DropboxUploadModal({
                   placeholder="Ex: Minha Gameplay Épica"
                   style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff' }}
                 />
+              </div>
+
+              <div style={{ marginBottom: '1rem', position: 'relative' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Jogo (Twitch):</label>
+                <input 
+                  type="text" 
+                  value={gameSearch} 
+                  onChange={handleGameSearchChange} 
+                  placeholder="Ex: Valorant"
+                  style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: selectedGame ? '1px solid #0061FE' : '1px solid #444', background: '#111', color: '#fff' }}
+                />
+                
+                {/* Lista de Autocomplete */}
+                {gameSearch && !selectedGame && (
+                  <div style={{ 
+                    position: 'absolute', top: '100%', left: 0, right: 0, 
+                    backgroundColor: '#1a1a1a', border: '1px solid #444', 
+                    borderRadius: '4px', marginTop: '4px', zIndex: 10,
+                    maxHeight: '200px', overflowY: 'auto',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                  }}>
+                    {isSearchingGame ? (
+                      <div style={{ padding: '1rem', textAlign: 'center', color: '#888' }}>Buscando...</div>
+                    ) : gameResults.length > 0 ? (
+                      gameResults.map(game => (
+                        <div 
+                          key={game.id} 
+                          onClick={() => handleSelectGame(game)}
+                          style={{ 
+                            display: 'flex', alignItems: 'center', gap: '10px', 
+                            padding: '0.5rem 1rem', cursor: 'pointer', borderBottom: '1px solid #333'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#333'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <img src={game.boxArt} alt={game.name} style={{ width: '32px', height: '43px', objectFit: 'cover', borderRadius: '4px' }} />
+                          <span style={{ fontSize: '0.9rem' }}>{game.name}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ padding: '1rem', textAlign: 'center', color: '#888' }}>Nenhum jogo encontrado.</div>
+                    )}
+                  </div>
+                )}
+                {selectedGame && (
+                  <div style={{ fontSize: '0.8rem', color: '#0061FE', marginTop: '0.3rem' }}>✅ Jogo Selecionado</div>
+                )}
               </div>
               <div style={{ marginBottom: '1.5rem' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Privacidade:</label>
