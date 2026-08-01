@@ -86,6 +86,7 @@ function App() {
     return <MobileOnly />;
   }
 
+  if (window.location.pathname === '/settings' || window.location.pathname === '/settings/') {
   if (!videoFile) {
     return <UploadScreen onVideoSelected={handleVideoSelected} />;
   }

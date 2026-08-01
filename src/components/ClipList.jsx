@@ -4,6 +4,7 @@ import SubmitClipModal from './SubmitClipModal';
 
 export default function ClipList({ clips, onPreview, onDownload, onDelete, onDownloadAll, onDropboxUpload }) {
   const [publishClip, setPublishClip] = useState(null);
+  const [isPreparingModal, setIsPreparingModal] = useState(null);
 
   return (
     <div className="clip-sidebar">
@@ -62,11 +63,18 @@ export default function ClipList({ clips, onPreview, onDownload, onDelete, onDow
                 <div style={{ marginTop: '8px' }}>
                   <button
                     className="btn btn-primary"
-                    onClick={() => setPublishClip(clip)}
+                    onClick={() => {
+                      setIsPreparingModal(clip.id);
+                      setTimeout(() => {
+                        setPublishClip(clip);
+                        setIsPreparingModal(null);
+                      }, 300);
+                    }}
+                    disabled={isPreparingModal === clip.id}
                     title="Publicar Clip na Nuvem"
-                    style={{ width: '100%', backgroundColor: '#0061FE', borderColor: '#0061FE' }}
+                    style={{ width: '100%', backgroundColor: '#0061FE', borderColor: '#0061FE', opacity: isPreparingModal === clip.id ? 0.7 : 1 }}
                   >
-                    ☁️ Publicar
+                    {isPreparingModal === clip.id ? '⏳ Carregando...' : '☁️ Publicar'}
                   </button>
                 </div>
               </div>
@@ -81,7 +89,6 @@ export default function ClipList({ clips, onPreview, onDownload, onDelete, onDow
           onClose={() => setPublishClip(null)}
           onSuccess={() => {
             setPublishClip(null);
-            alert('Clipe publicado com sucesso na galeria!');
           }}
         />
       )}
