@@ -186,9 +186,23 @@ export default function ClipsFeed({ onBack }) {
                         <p style={{ color: '#a0a0a0', fontSize: '0.8rem', marginBottom: '4px' }}>
                           🎮 {clip.gameName || 'Desconhecido'}
                         </p>
-                        <p>{new Date(clip.createdAt).toLocaleDateString('pt-BR')}</p>
-                        {!clip.privacy && <span className="badge badge-private">Não Listado</span>}
-                        {clip.privacy && <span className="badge badge-public">Público</span>}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px' }}>
+                          <p style={{ margin: 0 }}>{new Date(clip.createdAt).toLocaleDateString('pt-BR')}</p>
+                          <div style={{ display: 'flex', gap: '12px', color: '#a0a0a0', fontSize: '0.8rem' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                              {clip.views || 0}
+                            </span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+                              {clip.likes || 0}
+                            </span>
+                          </div>
+                        </div>
+                        <div style={{ marginTop: '8px' }}>
+                          {!clip.privacy && <span className="badge badge-private">Não Listado</span>}
+                          {clip.privacy && <span className="badge badge-public">Público</span>}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -222,7 +236,19 @@ export default function ClipsFeed({ onBack }) {
                         <p style={{ color: '#a0a0a0', fontSize: '0.8rem', marginBottom: '4px' }}>
                           🎮 {clip.gameName || 'Desconhecido'}
                         </p>
-                        <p>{new Date(clip.createdAt).toLocaleDateString('pt-BR')}</p>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px' }}>
+                          <p style={{ margin: 0 }}>{new Date(clip.createdAt).toLocaleDateString('pt-BR')}</p>
+                          <div style={{ display: 'flex', gap: '12px', color: '#a0a0a0', fontSize: '0.8rem' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                              {clip.views || 0}
+                            </span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+                              {clip.likes || 0}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
