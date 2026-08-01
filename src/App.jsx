@@ -4,6 +4,7 @@ import VideoEditor from './components/VideoEditor';
 import WatchScreen from './components/WatchScreen';
 import ClipsFeed from './components/ClipsFeed';
 import PrivacyPolicy from './components/PrivacyPolicy';
+import SettingsScreen from './components/SettingsScreen';
 import MobileOnly from './components/MobileOnly';
 import { useFFmpeg } from './hooks/useFFmpeg';
 
@@ -13,6 +14,11 @@ function App() {
   // Roteamento para Tela de Watch via ID do Firestore
   const [watchId, setWatchId] = useState(null);
   
+  // Inicializa o tema na montagem do app
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('app_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }, []);
   useEffect(() => {
     const path = window.location.pathname;
     if (path.startsWith('/clips/watch/')) {
@@ -87,6 +93,9 @@ function App() {
   }
 
   if (window.location.pathname === '/settings' || window.location.pathname === '/settings/') {
+    return <SettingsScreen onBack={handleBackFromWatch} />;
+  }
+
   if (!videoFile) {
     return <UploadScreen onVideoSelected={handleVideoSelected} />;
   }
