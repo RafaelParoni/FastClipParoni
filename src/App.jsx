@@ -3,6 +3,7 @@ import UploadScreen from './components/UploadScreen';
 import VideoEditor from './components/VideoEditor';
 import WatchScreen from './components/WatchScreen';
 import ClipsFeed from './components/ClipsFeed';
+import PrivacyPolicy from './components/PrivacyPolicy';
 import { useFFmpeg } from './hooks/useFFmpeg';
 
 function App() {
@@ -66,6 +67,10 @@ function App() {
 
   if (window.location.pathname === '/clips' || window.location.pathname === '/clips/') {
     return <ClipsFeed onBack={handleBackFromWatch} />;
+  }
+
+  if (window.location.pathname === '/privacidade' || window.location.pathname === '/privacidade/') {
+    return <PrivacyPolicy onBack={handleBackFromWatch} />;
   }
 
   if (!videoFile) {

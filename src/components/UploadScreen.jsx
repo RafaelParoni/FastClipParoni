@@ -110,6 +110,12 @@ export default function UploadScreen({ onVideoSelected }) {
           onChange={handleFileChange}
         />
       </div>
+
+      <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+        <a href="/privacidade" style={{ color: '#a0a0a0', fontSize: '0.9rem', textDecoration: 'none' }}>
+          🔒 Política de Privacidade e Uso de Dados
+        </a>
+      </div>
     </div>
     </div>
   );
