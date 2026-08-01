@@ -224,13 +224,40 @@ export default function WatchScreen({ clipId, onBack }) {
           <div style={{ backgroundColor: 'var(--bg-glass)', backdropFilter: 'blur(12px)', borderRadius: '16px', overflow: 'hidden', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-glass)' }}>
             
             {/* Player Colado nas Bordas Superiores */}
-            <video
-              ref={videoRef}
-              src={clipData.url}
-              controls
-              autoPlay
-              style={{ width: '100%', maxHeight: '75vh', display: 'block', backgroundColor: '#000' }}
-            />
+            {clipData.url.includes('drive.google.com') ? (() => {
+              // Extrair o ID do Google Drive (ex: uc?id=XYZ&export=download)
+              const match = clipData.url.match(/id=([^&]+)/);
+              const gDriveId = match ? match[1] : null;
+              if (gDriveId) {
+                return (
+                  <iframe 
+                    src={`https://drive.google.com/file/d/${gDriveId}/preview`} 
+                    width="100%" 
+                    height="100%" 
+                    style={{ minHeight: '65vh', border: 'none', backgroundColor: '#000', display: 'block' }} 
+                    allow="autoplay"
+                    allowFullScreen
+                  />
+                );
+              }
+              return (
+                <video
+                  ref={videoRef}
+                  src={clipData.url}
+                  controls
+                  autoPlay
+                  style={{ width: '100%', maxHeight: '75vh', display: 'block', backgroundColor: '#000' }}
+                />
+              );
+            })() : (
+              <video
+                ref={videoRef}
+                src={clipData.url}
+                controls
+                autoPlay
+                style={{ width: '100%', maxHeight: '75vh', display: 'block', backgroundColor: '#000' }}
+              />
+            )}
             
             {/* Informações Abaixo do Vídeo */}
             <div style={{ padding: '1.5rem' }}>

@@ -13,18 +13,21 @@
         const params = new URLSearchParams(hash);
         const accessToken = params.get('access_token');
         const error = params.get('error');
+        const state = params.get('state');
 
         if (accessToken) {
             // Send the token to the parent window
             if (window.opener) {
-                window.opener.postMessage({ type: 'dropbox-auth-success', token: accessToken }, window.location.origin);
+                const messageType = state === 'google' ? 'google-auth-success' : 'dropbox-auth-success';
+                window.opener.postMessage({ type: messageType, token: accessToken }, window.location.origin);
                 window.close();
             } else {
                 document.body.innerHTML = '<p>Erro: Não foi possível encontrar a janela principal. Você pode fechar esta aba e tentar novamente.</p>';
             }
         } else if (error) {
             if (window.opener) {
-                window.opener.postMessage({ type: 'dropbox-auth-error', error: error }, window.location.origin);
+                const messageType = state === 'google' ? 'google-auth-error' : 'dropbox-auth-error';
+                window.opener.postMessage({ type: messageType, error: error }, window.location.origin);
                 window.close();
             } else {
                 document.body.innerHTML = '<p>Erro na autenticação com o Dropbox.</p>';

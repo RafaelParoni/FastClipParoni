@@ -22,7 +22,13 @@ export default async function handler(req, res) {
       return res.status(404).send("Clipe vazio");
     }
     
-    const videoUrl = fields.url ? fields.url.stringValue : '';
+    let videoUrl = fields.url ? fields.url.stringValue : '';
+    
+    // Truque para o Discord: forçar a extensão .mp4 no Google Drive para o crawler não barrar o embed
+    if (videoUrl.includes('drive.google.com') && !videoUrl.endsWith('.mp4')) {
+       videoUrl += '&ext=.mp4';
+    }
+    
     const title = fields.title ? fields.title.stringValue : 'Clipe de FastClip';
     const thumbnail = fields.thumbnail ? fields.thumbnail.stringValue : '';
     
