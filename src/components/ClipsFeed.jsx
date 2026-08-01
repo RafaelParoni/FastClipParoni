@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import SubmitClipModal from './SubmitClipModal';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function ClipsFeed({ onBack }) {
+  const { t } = useLanguage();
   const [myClips, setMyClips] = useState([]);
   const [publicClips, setPublicClips] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -116,15 +118,15 @@ export default function ClipsFeed({ onBack }) {
         <nav className="header-nav">
           <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-            Início
+            {t('nav.home')}
           </a>
           <a href="/clips" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-            Clips
+            {t('nav.clips')}
           </a>
           <a href="/" className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line><line x1="14.47" y1="14.48" x2="20" y2="20"></line><line x1="8.12" y1="8.12" x2="12" y2="12"></line></svg>
-            Criar clip
+            {t('nav.createClip')}
           </a>
           <a href="/settings" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -144,7 +146,7 @@ export default function ClipsFeed({ onBack }) {
 
       <div className="feed-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
         <div style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <h1 style={{ color: '#fff', fontSize: '2.5rem', margin: 0 }}>Galeria de Clipes</h1>
+          <h1 style={{ color: '#fff', fontSize: '2.5rem', margin: 0 }}>{t('feed.title')}</h1>
           <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
             <button 
               className="btn btn-primary" 
@@ -152,7 +154,7 @@ export default function ClipsFeed({ onBack }) {
               style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.6rem 1rem' }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              Enviar Clip
+              {t('feed.submit')}
             </button>
             <button 
               className="btn btn-secondary" 
@@ -160,7 +162,7 @@ export default function ClipsFeed({ onBack }) {
               style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.6rem 1rem' }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-              Filtros {(selectedGame !== 'Todos' || sortOrder !== 'newest') && <span style={{ background: '#4cb5ff', width: '8px', height: '8px', borderRadius: '50%' }}></span>}
+              {t('feed.filters')} {(selectedGame !== 'Todos' || sortOrder !== 'newest') && <span style={{ background: '#4cb5ff', width: '8px', height: '8px', borderRadius: '50%' }}></span>}
             </button>
           </div>
         </div>
@@ -168,7 +170,7 @@ export default function ClipsFeed({ onBack }) {
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '4rem' }}>
              <div className="loading-spinner" />
-             <p style={{ marginTop: '1rem', color: '#a0a0a0' }}>Carregando clipes maravilhosos...</p>
+             <p style={{ marginTop: '1rem', color: '#a0a0a0' }}>{t('feed.loading')}</p>
           </div>
         ) : (
           <>
@@ -176,7 +178,7 @@ export default function ClipsFeed({ onBack }) {
             {filteredMyClips.length > 0 && (
               <section style={{ marginBottom: '4rem' }}>
                 <h2 style={{ color: '#4cb5ff', borderBottom: '2px solid rgba(76, 181, 255, 0.2)', paddingBottom: '0.5rem', marginBottom: '1.5rem' }}>
-                  👤 Meus Clipes
+                  {t('feed.myClips')}
                 </h2>
                 <div className="clip-grid">
                   {currentMyClips.map(clip => (
@@ -203,8 +205,8 @@ export default function ClipsFeed({ onBack }) {
                           </div>
                         </div>
                         <div style={{ marginTop: '8px' }}>
-                          {!clip.privacy && <span className="badge badge-private">Não Listado</span>}
-                          {clip.privacy && <span className="badge badge-public">Público</span>}
+                          {!clip.privacy && <span className="badge badge-private">{t('feed.unlisted')}</span>}
+                          {clip.privacy && <span className="badge badge-public">{t('feed.public')}</span>}
                         </div>
                       </div>
                     </div>
@@ -212,9 +214,9 @@ export default function ClipsFeed({ onBack }) {
                 </div>
                 {totalMyPages > 1 && (
                   <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem' }}>
-                    <button className="btn btn-secondary" disabled={myClipsPage === 1} onClick={() => setMyClipsPage(p => p - 1)}>Anterior</button>
-                    <span style={{ color: '#a0a0a0', alignSelf: 'center' }}>Página {myClipsPage} de {totalMyPages}</span>
-                    <button className="btn btn-secondary" disabled={myClipsPage === totalMyPages} onClick={() => setMyClipsPage(p => p + 1)}>Próxima</button>
+                    <button className="btn btn-secondary" disabled={myClipsPage === 1} onClick={() => setMyClipsPage(p => p - 1)}>{t('feed.prev')}</button>
+                    <span style={{ color: '#a0a0a0', alignSelf: 'center' }}>{t('feed.page')} {myClipsPage} {t('feed.of')} {totalMyPages}</span>
+                    <button className="btn btn-secondary" disabled={myClipsPage === totalMyPages} onClick={() => setMyClipsPage(p => p + 1)}>{t('feed.next')}</button>
                   </div>
                 )}
               </section>
@@ -223,10 +225,10 @@ export default function ClipsFeed({ onBack }) {
             {/* Clips Públicos Section */}
             <section>
               <h2 style={{ color: '#f59e0b', borderBottom: '2px solid rgba(245, 158, 11, 0.2)', paddingBottom: '0.5rem', marginBottom: '1.5rem' }}>
-                🌍 Explorar Clipes da Comunidade
+                {t('feed.publicClips')}
               </h2>
               {filteredPublicClips.length === 0 ? (
-                <p style={{ color: '#888' }}>Nenhum clipe público correspondente aos filtros foi encontrado.</p>
+                <p style={{ color: '#888' }}>{t('feed.emptyPublic')}</p>
               ) : (
                 <div className="clip-grid">
                   {currentPublicClips.map(clip => (
@@ -259,9 +261,9 @@ export default function ClipsFeed({ onBack }) {
               )}
               {totalPublicPages > 1 && (
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem' }}>
-                  <button className="btn btn-secondary" disabled={publicClipsPage === 1} onClick={() => setPublicClipsPage(p => p - 1)}>Anterior</button>
-                  <span style={{ color: '#a0a0a0', alignSelf: 'center' }}>Página {publicClipsPage} de {totalPublicPages}</span>
-                  <button className="btn btn-secondary" disabled={publicClipsPage === totalPublicPages} onClick={() => setPublicClipsPage(p => p + 1)}>Próxima</button>
+                  <button className="btn btn-secondary" disabled={publicClipsPage === 1} onClick={() => setPublicClipsPage(p => p - 1)}>{t('feed.prev')}</button>
+                  <span style={{ color: '#a0a0a0', alignSelf: 'center' }}>{t('feed.page')} {publicClipsPage} {t('feed.of')} {totalPublicPages}</span>
+                  <button className="btn btn-secondary" disabled={publicClipsPage === totalPublicPages} onClick={() => setPublicClipsPage(p => p + 1)}>{t('feed.next')}</button>
                 </div>
               )}
             </section>
@@ -273,32 +275,32 @@ export default function ClipsFeed({ onBack }) {
         <div className="modal-overlay" onClick={() => setShowFilterModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', padding: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ color: '#fff', fontSize: '1.5rem', margin: 0 }}>Filtrar Clipes</h2>
+              <h2 style={{ color: '#fff', fontSize: '1.5rem', margin: 0 }}>{t('filter.title')}</h2>
               <button onClick={() => setShowFilterModal(false)} style={{ background: 'none', border: 'none', color: '#a0a0a0', cursor: 'pointer', fontSize: '1.5rem' }}>&times;</button>
             </div>
             
             <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', color: '#a0a0a0', marginBottom: '0.5rem', fontSize: '0.9rem' }}>🎮 Escolha o Jogo:</label>
+              <label style={{ display: 'block', color: '#a0a0a0', marginBottom: '0.5rem', fontSize: '0.9rem' }}>{t('filter.game')}</label>
               <select 
                 value={selectedGame} 
                 onChange={(e) => { setSelectedGame(e.target.value); setMyClipsPage(1); setPublicClipsPage(1); }}
                 style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff' }}
               >
                 {availableGames.map(game => (
-                  <option key={game} value={game}>{game}</option>
+                  <option key={game} value={game}>{game === 'Todos' ? t('filter.all') : game}</option>
                 ))}
               </select>
             </div>
 
             <div style={{ marginBottom: '2.5rem' }}>
-              <label style={{ display: 'block', color: '#a0a0a0', marginBottom: '0.5rem', fontSize: '0.9rem' }}>📅 Ordenar Por:</label>
+              <label style={{ display: 'block', color: '#a0a0a0', marginBottom: '0.5rem', fontSize: '0.9rem' }}>{t('filter.sort')}</label>
               <select 
                 value={sortOrder} 
                 onChange={(e) => { setSortOrder(e.target.value); setMyClipsPage(1); setPublicClipsPage(1); }}
                 style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff' }}
               >
-                <option value="newest">Mais Novos Primeiro</option>
-                <option value="oldest">Mais Antigos Primeiro</option>
+                <option value="newest">{t('filter.newest')}</option>
+                <option value="oldest">{t('filter.oldest')}</option>
               </select>
             </div>
 
@@ -314,14 +316,14 @@ export default function ClipsFeed({ onBack }) {
                 }}
                 style={{ flex: 1, padding: '0.8rem' }}
               >
-                🧹 Limpar
+                {t('filter.clear')}
               </button>
               <button 
                 className="btn btn-primary"
                 onClick={() => setShowFilterModal(false)}
                 style={{ flex: 1, padding: '0.8rem' }}
               >
-                Aplicar
+                {t('filter.apply')}
               </button>
             </div>
           </div>

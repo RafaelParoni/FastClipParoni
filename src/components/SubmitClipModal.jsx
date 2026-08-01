@@ -1,8 +1,10 @@
 import { useRef, useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function SubmitClipModal({ onClose, onSuccess, initialVideoFile = null }) {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState(initialVideoFile ? 'file' : 'link');
   
   const [title, setTitle] = useState('');
@@ -477,7 +479,7 @@ export default function SubmitClipModal({ onClose, onSuccess, initialVideoFile =
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '450px', width: '90%', margin: '1rem', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-header">
-          <h2>Enviar Clip</h2>
+          <h2>{t('submit.title')}</h2>
           {!isSubmitting && (
              <button className="btn btn-secondary" onClick={onClose}>✕</button>
           )}
@@ -497,34 +499,34 @@ export default function SubmitClipModal({ onClose, onSuccess, initialVideoFile =
               <div style={{ width: '64px', height: '64px', backgroundColor: '#10b981', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem auto', boxShadow: '0 0 20px rgba(16, 185, 129, 0.4)' }}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
               </div>
-              <h3 style={{ color: '#fff', marginBottom: '1rem', fontSize: '1.4rem' }}>Sucesso!</h3>
-              <p style={{ color: '#a0a0a0', marginBottom: '2rem' }}>O clipe foi processado e publicado na nuvem.</p>
+              <h3 style={{ color: '#fff', marginBottom: '1rem', fontSize: '1.4rem' }}>{t('submit.success')}</h3>
+              <p style={{ color: '#a0a0a0', marginBottom: '2rem' }}>{t('submit.successDesc')}</p>
               <button 
                 className="btn btn-primary" 
                 style={{ width: '100%', padding: '1rem', backgroundColor: '#0061FE' }}
                 onClick={() => onSuccess(createdClipId)}
               >
-                Continuar
+                {t('submit.continue')}
               </button>
             </div>
           ) : isSubmitting ? (
             <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
               <div className="loading-spinner" style={{ margin: '0 auto 1.5rem auto' }} />
               
-              {uploadStatus === 'auth' && <p style={{ color: '#fff', fontSize: '1.1rem' }}>Aguardando autorização...</p>}
+              {uploadStatus === 'auth' && <p style={{ color: '#fff', fontSize: '1.1rem' }}>{t('submit.auth')}</p>}
               
               {uploadStatus === 'uploading' && (
                 <>
-                  <p style={{ color: '#fff', fontSize: '1.1rem', marginBottom: '1rem' }}>Enviando vídeo para nuvem... {Math.round(uploadProgress)}%</p>
+                  <p style={{ color: '#fff', fontSize: '1.1rem', marginBottom: '1rem' }}>{t('submit.uploading')} {Math.round(uploadProgress)}%</p>
                   <div className="progress-bar-container" style={{ background: '#222', borderRadius: '8px', overflow: 'hidden', height: '12px' }}>
                     <div className="progress-bar-fill" style={{ width: `${uploadProgress}%`, backgroundColor: '#0061FE', height: '100%', transition: 'width 0.3s ease' }} />
                   </div>
                 </>
               )}
 
-              {uploadStatus === 'generating' && <p style={{ color: '#fff', fontSize: '1.1rem' }}>Gerando links públicos e metadados...</p>}
+              {uploadStatus === 'generating' && <p style={{ color: '#fff', fontSize: '1.1rem' }}>{t('submit.generating')}</p>}
               
-              {uploadStatus === '' && <p style={{ color: '#fff', fontSize: '1.1rem' }}>Salvando no banco de dados...</p>}
+              {uploadStatus === '' && <p style={{ color: '#fff', fontSize: '1.1rem' }}>{t('submit.savingDb')}</p>}
             </div>
           ) : (
             <div style={{ textAlign: 'left', margin: '0 auto' }}>
@@ -535,25 +537,25 @@ export default function SubmitClipModal({ onClose, onSuccess, initialVideoFile =
                     onClick={() => setActiveTab('link')} 
                     style={{ flex: 1, padding: '0.8rem', background: 'transparent', border: 'none', borderBottom: activeTab === 'link' ? '2px solid #0061FE' : '2px solid transparent', color: activeTab === 'link' ? '#fff' : '#888', cursor: 'pointer', fontWeight: 'bold' }}
                   >
-                    🔗 Colar Link
+                    {t('submit.pasteLink')}
                   </button>
                   <button 
                     onClick={() => setActiveTab('file')} 
                     style={{ flex: 1, padding: '0.8rem', background: 'transparent', border: 'none', borderBottom: activeTab === 'file' ? '2px solid #0061FE' : '2px solid transparent', color: activeTab === 'file' ? '#fff' : '#888', cursor: 'pointer', fontWeight: 'bold' }}
                   >
-                    🎬 Enviar Arquivo
+                    {t('submit.uploadFile')}
                   </button>
                 </div>
               )}
               
               {activeTab === 'link' ? (
                 <div style={{ marginBottom: '1.5rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Link do Vídeo (Dropbox, etc):</label>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>{t('submit.videoLink')}</label>
                   <input 
                     type="text" 
                     value={link} 
                     onChange={(e) => setLink(e.target.value)} 
-                    placeholder="Ex: https://www.dropbox.com/s/..."
+                    placeholder={t('submit.videoLinkHolder')}
                     style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff' }}
                   />
                 </div>
@@ -561,7 +563,7 @@ export default function SubmitClipModal({ onClose, onSuccess, initialVideoFile =
                 <div style={{ marginBottom: '1.5rem' }}>
                   {!initialVideoFile && (
                     <>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Arquivo de Vídeo (Máx: 2GB):</label>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>{t('submit.videoFile')}</label>
                       <input 
                         type="file" 
                         accept="video/*"
@@ -570,28 +572,28 @@ export default function SubmitClipModal({ onClose, onSuccess, initialVideoFile =
                       />
                     </>
                   )}
-                  {videoFile && <p style={{ fontSize: '0.8rem', color: '#4cb5ff', marginTop: '4px' }}>Arquivo selecionado: {videoFile.name || 'video_clip.mp4'}</p>}
+                  {videoFile && <p style={{ fontSize: '0.8rem', color: '#4cb5ff', marginTop: '4px' }}>{t('submit.selectedFile')} {videoFile.name || 'video_clip.mp4'}</p>}
                 </div>
               )}
 
               <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Título do Vídeo:</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>{t('submit.videoTitle')}</label>
                 <input 
                   type="text" 
                   value={title} 
                   onChange={(e) => setTitle(e.target.value)} 
-                  placeholder="Ex: Minha Gameplay Épica"
+                  placeholder={t('submit.videoTitleHolder')}
                   style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff' }}
                 />
               </div>
 
               <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Jogo (Twitch):</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>{t('submit.game')}</label>
                 <input 
                   type="text" 
                   value={gameSearch} 
                   onChange={handleGameSearchChange} 
-                  placeholder="Busque o nome do jogo..."
+                  placeholder={t('submit.gameHolder')}
                   style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: selectedGame ? '1px solid #0061FE' : '1px solid #444', background: '#111', color: '#fff' }}
                 />
                 
@@ -604,7 +606,7 @@ export default function SubmitClipModal({ onClose, onSuccess, initialVideoFile =
                     boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
                   }}>
                     {isSearchingGame ? (
-                      <div style={{ padding: '1rem', textAlign: 'center', color: '#888' }}>Buscando...</div>
+                      <div style={{ padding: '1rem', textAlign: 'center', color: '#888' }}>{t('submit.gameSearching')}</div>
                     ) : gameResults.length > 0 ? (
                       gameResults.map(game => (
                         <div 
@@ -622,18 +624,18 @@ export default function SubmitClipModal({ onClose, onSuccess, initialVideoFile =
                         </div>
                       ))
                     ) : (
-                      <div style={{ padding: '1rem', textAlign: 'center', color: '#888' }}>Nenhum jogo encontrado.</div>
+                      <div style={{ padding: '1rem', textAlign: 'center', color: '#888' }}>{t('submit.gameNotFound')}</div>
                     )}
                   </div>
                 )}
                 {selectedGame && (
-                  <div style={{ fontSize: '0.8rem', color: '#0061FE', marginTop: '0.3rem' }}>✅ A imagem do jogo será usada como capa</div>
+                  <div style={{ fontSize: '0.8rem', color: '#0061FE', marginTop: '0.3rem' }}>{t('submit.gameSelected')}</div>
                 )}
               </div>
 
               {activeTab === 'file' && (
                 <div style={{ marginBottom: '1.5rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Onde salvar o arquivo de vídeo?</label>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>{t('submit.whereToSave')}</label>
                   <select 
                     value={cloudProvider} 
                     onChange={(e) => setCloudProvider(e.target.value)}
@@ -643,25 +645,25 @@ export default function SubmitClipModal({ onClose, onSuccess, initialVideoFile =
                     <option value="google-drive">Google Drive</option>
                   </select>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginTop: '8px' }}>
-                    PS: O vídeo será salvo na pasta /FastClip deste provedor e publicado na galeria.
+                    {t('submit.savePs')}
                   </span>
                 </div>
               )}
 
               <div style={{ marginBottom: '2rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Privacidade:</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>{t('submit.privacy')}</label>
                 <select 
                   value={isPublic ? 'true' : 'false'} 
                   onChange={(e) => setIsPublic(e.target.value === 'true')}
                   style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff' }}
                 >
-                  <option value="true">Público (Aparecer na Galeria)</option>
-                  <option value="false">Não Listado (Apenas por Link Direto)</option>
+                  <option value="true">{t('submit.public')}</option>
+                  <option value="false">{t('submit.unlisted')}</option>
                 </select>
               </div>
 
               <button className="btn btn-primary" style={{ width: '100%', padding: '1rem', backgroundColor: '#0061FE' }} onClick={handleSubmit}>
-                {activeTab === 'link' ? 'Enviar para Galeria' : 'Upload & Publicar'}
+                {activeTab === 'link' ? t('submit.sendGallery') : t('submit.uploadPublish')}
               </button>
             </div>
           )}

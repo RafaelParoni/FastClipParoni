@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { formatTime } from './Timeline';
 import SubmitClipModal from './SubmitClipModal';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function ClipList({ clips, onPreview, onDownload, onDelete, onDownloadAll, onDropboxUpload }) {
+  const { t } = useLanguage();
   const [publishClip, setPublishClip] = useState(null);
   const [isPreparingModal, setIsPreparingModal] = useState(null);
 
@@ -10,7 +12,7 @@ export default function ClipList({ clips, onPreview, onDownload, onDelete, onDow
     <div className="clip-sidebar">
       <div className="clip-sidebar-header">
         <h2>
-          🎞️ Clips
+          {t('cliplist.title')}
           {clips.length > 0 && <span className="clip-count">{clips.length}</span>}
         </h2>
       </div>
@@ -19,7 +21,7 @@ export default function ClipList({ clips, onPreview, onDownload, onDelete, onDow
         {clips.length === 0 ? (
           <div className="clip-list-empty">
             <span className="empty-icon">✂️</span>
-            <p>Nenhum clip criado ainda.<br />Selecione um trecho na timeline e clique em &quot;Criar Clip&quot;.</p>
+            <p dangerouslySetInnerHTML={{ __html: t('cliplist.empty') }}></p>
           </div>
         ) : (
           clips.map((clip, index) => (
@@ -37,23 +39,23 @@ export default function ClipList({ clips, onPreview, onDownload, onDelete, onDow
                   <button
                     className="btn btn-secondary"
                     onClick={() => onPreview(clip)}
-                    title="Visualizar clip"
+                    title={t('cliplist.preview')}
                     style={{ flex: 1 }}
                   >
-                    ▶ Ver
+                    {t('cliplist.preview')}
                   </button>
                   <button
                     className="btn btn-primary"
                     onClick={() => onDownload(clip)}
-                    title="Baixar clip"
+                    title={t('cliplist.download')}
                     style={{ flex: 1 }}
                   >
-                    ⬇ Baixar
+                    {t('cliplist.download')}
                   </button>
                   <button
                     className="btn btn-danger"
                     onClick={() => onDelete(clip.id)}
-                    title="Deletar clip"
+                    title="Delete clip"
                     style={{ padding: '0 12px' }}
                   >
                     ✕
@@ -71,10 +73,10 @@ export default function ClipList({ clips, onPreview, onDownload, onDelete, onDow
                       }, 300);
                     }}
                     disabled={isPreparingModal === clip.id}
-                    title="Publicar Clip na Nuvem"
+                    title={t('cliplist.publish')}
                     style={{ width: '100%', backgroundColor: '#0061FE', borderColor: '#0061FE', opacity: isPreparingModal === clip.id ? 0.7 : 1 }}
                   >
-                    {isPreparingModal === clip.id ? '⏳ Carregando...' : '☁️ Publicar'}
+                    {isPreparingModal === clip.id ? t('cliplist.loading') : t('cliplist.publish')}
                   </button>
                 </div>
               </div>
@@ -99,7 +101,7 @@ export default function ClipList({ clips, onPreview, onDownload, onDelete, onDow
             className="btn btn-primary btn-lg"
             onClick={onDownloadAll}
           >
-            ⬇ Baixar Todos ({clips.length} clips)
+            {t('cliplist.downloadAll')} ({clips.length} {t('cliplist.clips')})
           </button>
         </div>
       )}

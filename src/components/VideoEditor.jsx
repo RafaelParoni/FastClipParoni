@@ -7,8 +7,10 @@ import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import { db } from '../services/firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
+  const { t } = useLanguage();
   const videoRef = useRef(null);
   const [videoUrl] = useState(() => URL.createObjectURL(videoFile));
 
@@ -36,7 +38,7 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
   const addAudioTrack = useCallback((file) => {
     setAudioTracks(prev => {
       if (prev.length >= 5) {
-         alert("Limite máximo de 5 áudios extras atingido!");
+         alert(t('editor.maxAudioLimit'));
          return prev;
       }
       const newTrack = {
@@ -118,7 +120,7 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
         if (isAudioOrMp4) {
           addAudioTrack(file);
         } else {
-          alert('Por favor, arraste um arquivo de áudio ou .mp4 válido.');
+          alert(t('editor.invalidAudio'));
         }
       }
     };
@@ -328,7 +330,7 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
   // Create clip
   const handleCreateClip = useCallback(async () => {
     if (clipEnd <= clipStart) {
-      alert('O fim do clip deve ser depois do início.');
+      alert(t('editor.endBeforeStart'));
       return;
     }
 
@@ -354,7 +356,7 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
       setClipCounter((prev) => prev + 1);
     } catch (error) {
       console.error('Erro ao criar clip:', error);
-      alert('Erro ao criar clip. Tente novamente.');
+      alert(t('editor.createError'));
     }
   }, [clipStart, clipEnd, clipCounter, videoFile, ffmpeg, audioTracks, volume]);
 
@@ -379,7 +381,7 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
       downloadBlob(zipBlob, 'fastclip_clips.zip');
     } catch (error) {
       console.error('Erro ao criar ZIP:', error);
-      alert('Erro ao baixar clips. Tente novamente.');
+      alert(t('editor.downloadError'));
     } finally {
       setDownloadingAll(false);
     }
@@ -408,7 +410,7 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
   const handleDropboxUploadClick = (clip) => {
     const clientId = import.meta.env.VITE_DROPBOX_CLIENT_ID;
     if (!clientId || clientId === 'COLOQUE_SEU_CLIENT_ID_AQUI') {
-      alert('Você precisa configurar o VITE_DROPBOX_CLIENT_ID no arquivo .env!');
+      alert(t('editor.missingDropboxEnv'));
       return;
     }
 
@@ -603,15 +605,15 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
         <nav className="header-nav">
           <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-            Início
+            {t('nav.home')}
           </a>
           <a href="/clips" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-            Clips
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            {t('nav.gallery')}
           </a>
           <a href="/" className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line><line x1="14.47" y1="14.48" x2="20" y2="20"></line><line x1="8.12" y1="8.12" x2="12" y2="12"></line></svg>
-            Criar clip
+            {t('nav.createClip')}
           </a>
         </nav>
         <div className="header-actions">
@@ -696,7 +698,7 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
               onClick={handleCreateClip}
               disabled={ffmpeg.processing || clipEnd <= clipStart}
             >
-              ✂️ Criar Clip ({formatTime(clipEnd - clipStart)})
+              {t('editor.createClipBtn')} ({formatTime(clipEnd - clipStart)})
             </button>
             
             <button
@@ -704,18 +706,18 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
               onClick={() => {
                 setClipStart(currentTime);
               }}
-              title="Marcar início no tempo atual"
+              title={t('editor.markStartTitle')}
             >
-              📍 Marcar Início
+              {t('editor.markStartBtn')}
             </button>
             <button
               className="btn btn-secondary"
               onClick={() => {
                 setClipEnd(currentTime);
               }}
-              title="Marcar fim no tempo atual"
+              title={t('editor.markEndTitle')}
             >
-              🏁 Marcar Fim
+              {t('editor.markEndBtn')}
             </button>
           </div>
         </div>
@@ -756,7 +758,7 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
       {(ffmpeg.loading || ffmpeg.processing) && (
         <div className="loading-overlay">
           <div className="loading-spinner" />
-          <p>{ffmpeg.processingMessage || 'Processando...'}</p>
+          <p>{ffmpeg.processingMessage || t('editor.processing')}</p>
           {ffmpeg.progress > 0 && (
             <>
               <div className="progress-bar-container">
@@ -771,15 +773,14 @@ export default function VideoEditor({ videoFile, onBack, ffmpeg }) {
       {downloadingAll && (
         <div className="loading-overlay">
           <div className="loading-spinner" />
-          <p>Empacotando clips em ZIP...</p>
+          <p>{t('editor.zipping')}</p>
         </div>
       )}
 
-      {/* Drag Overlay */}
       {isDraggingOver && (
         <div className="drag-overlay">
           <div className="drag-content">
-            <h2>Solte o arquivo para adicionar a faixa de áudio</h2>
+            <h2>{t('editor.dropAudio')}</h2>
           </div>
         </div>
       )}

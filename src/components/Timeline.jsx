@@ -1,9 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import useVideoFrames from '../hooks/useVideoFrames';
 import useAudioWaveform from '../hooks/useAudioWaveform';
+import { useLanguage } from '../contexts/LanguageContext';
 
 function AudioTrackContent({ track, index, getPositionPercent, handleMouseDown, dragState }) {
   const { waveformUrl } = useAudioWaveform(track.file, 'rgba(253, 224, 71, 0.8)');
+  const { t } = useLanguage();
   
   return (
     <div className="track-row">
@@ -58,6 +60,7 @@ export default function Timeline({
   videoFile,
   onAddAudioTrack,
 }) {
+  const { t } = useLanguage();
   const trackRef = useRef(null);
   const [dragState, setDragState] = useState(null);
 
@@ -155,10 +158,10 @@ export default function Timeline({
   return (
     <div className="timeline-section">
       <div className="timeline-header">
-        <h3>✂️ Selecionar Clip</h3>
+        <h3>{t('timeline.selectClip')}</h3>
         <div className="time-inputs">
           <div className="time-input-group">
-            <label>Início</label>
+            <label>{t('timeline.start')}</label>
             <input
               type="text"
               value={formatTime(clipStart)}
@@ -169,7 +172,7 @@ export default function Timeline({
             />
           </div>
           <div className="time-input-group">
-            <label>Fim</label>
+            <label>{t('timeline.end')}</label>
             <input
               type="text"
               value={formatTime(clipEnd)}
@@ -189,7 +192,7 @@ export default function Timeline({
         {/* Track Headers (Left Column) */}
         <div className="timeline-headers">
           <div className="track-header">
-            <label title="Clip">🎬 Clip</label>
+            <label title="Clip">{t('timeline.clipLabel')}</label>
             <div className="track-volume-container">
               <span className="volume-percent">{Math.round(videoVolume * 100)}%</span>
               <input type="range" min="0" max="1" step="0.01" value={videoVolume} onChange={onVideoVolumeChange} className="vertical-slider" />
@@ -198,8 +201,8 @@ export default function Timeline({
           
           {audioTracks.map((track, index) => (
             <div key={track.id} className="track-header">
-              <button className="delete-track-btn" onClick={() => onRemoveAudioTrack(track.id)}>Remover</button>
-              <label title={track.file.name}>🎵 Áudio {index + 1}</label>
+              <button className="delete-track-btn" onClick={() => onRemoveAudioTrack(track.id)}>{t('timeline.remove')}</button>
+              <label title={track.file.name}>{t('timeline.audioLabel')} {index + 1}</label>
               <div className="track-volume-container">
                 <span className="volume-percent">{Math.round(track.volume * 100)}%</span>
                 <input type="range" min="0" max="1" step="0.01" value={track.volume} onChange={(e) => onUpdateAudioTrack(track.id, { volume: parseFloat(e.target.value) })} className="vertical-slider" />
@@ -277,7 +280,7 @@ export default function Timeline({
                   color: 'var(--text-muted)'
                 }}
               >
-                <span>+ Adicionar ou arrastar um arquivo .mp3/.mp4</span>
+                <span>{t('timeline.addAudio')}</span>
                 <input 
                   type="file" 
                   accept="audio/*, video/mp4, video/quicktime" 

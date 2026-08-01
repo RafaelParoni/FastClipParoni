@@ -1,7 +1,9 @@
 import { useRef, useEffect } from 'react';
 import { formatTime } from './Timeline';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function ClipPreviewModal({ clip, onClose, onDownload }) {
+  const { t } = useLanguage();
   const videoRef = useRef(null);
 
   useEffect(() => {
@@ -40,15 +42,15 @@ export default function ClipPreviewModal({ clip, onClose, onDownload }) {
             }}
           />
           <div className="clip-item-meta" style={{ justifyContent: 'center' }}>
-            <span>⏱ Duração: {formatTime(clip.duration)}</span>
+            <span>⏱ {t('preview.duration')} {formatTime(clip.duration)}</span>
             <span>📍 {formatTime(clip.startTime)} → {formatTime(clip.endTime)}</span>
           </div>
           <div className="modal-actions">
             <button className="btn btn-primary btn-lg" onClick={() => onDownload(clip)}>
-              ⬇ Baixar Clip
+              ⬇ {t('preview.download')}
             </button>
             <button className="btn btn-secondary btn-lg" onClick={onClose}>
-              Fechar
+              {t('preview.close')}
             </button>
           </div>
         </div>

@@ -2,8 +2,10 @@ import { useState, useRef, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
 import CustomPlayer from './CustomPlayer';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function WatchScreen({ clipId, onBack }) {
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
   const [clipData, setClipData] = useState(null);
   const [suggestedClips, setSuggestedClips] = useState([]);
@@ -31,7 +33,7 @@ export default function WatchScreen({ clipId, onBack }) {
   useEffect(() => {
     async function fetchClip() {
       if (!clipId) {
-        setError('ID do clipe não fornecido.');
+        setError(t('watch.missingId'));
         setLoading(false);
         return;
       }
@@ -52,11 +54,11 @@ export default function WatchScreen({ clipId, onBack }) {
           
           setClipData(data);
         } else {
-          setError('Clipe não encontrado ou foi removido.');
+          setError(t('watch.notFound'));
         }
       } catch (err) {
         console.error(err);
-        setError('Erro ao carregar o clipe.');
+        setError(t('watch.errorLoading'));
       } finally {
         setLoading(false);
       }
@@ -101,7 +103,7 @@ export default function WatchScreen({ clipId, onBack }) {
       setTimeout(() => setCopied(false), 2000);
     }).catch(err => {
       console.error('Falha ao copiar:', err);
-      alert('Não foi possível copiar o link.');
+      alert(t('watch.copyFail'));
     });
   };
 
@@ -128,7 +130,7 @@ export default function WatchScreen({ clipId, onBack }) {
       }
     } catch (e) {
       console.error(e);
-      alert('Erro ao registrar curtida.');
+      alert(t('watch.likeError'));
     }
   };
 
@@ -142,7 +144,7 @@ export default function WatchScreen({ clipId, onBack }) {
       setClipData(prev => ({ ...prev, privacy: newPrivacy }));
     } catch (err) {
       console.error(err);
-      alert('Erro ao atualizar privacidade.');
+      alert(t('watch.privacyError'));
     }
   };
 
@@ -154,7 +156,7 @@ export default function WatchScreen({ clipId, onBack }) {
       window.location.href = '/clips';
     } catch (err) {
       console.error(err);
-      alert('Erro ao excluir clipe.');
+      alert(t('watch.deleteError'));
       setIsDeleting(false);
       setShowDeleteModal(false);
     }
@@ -164,7 +166,7 @@ export default function WatchScreen({ clipId, onBack }) {
     return (
       <div className="editor-layout" style={{ justifyContent: 'center', alignItems: 'center' }}>
         <div className="loading-spinner" />
-        <p style={{ marginTop: '1rem', color: '#fff' }}>Carregando clipe...</p>
+        <p style={{ marginTop: '1rem', color: '#fff' }}>{t('watch.loading')}</p>
       </div>
     );
   }
@@ -172,9 +174,9 @@ export default function WatchScreen({ clipId, onBack }) {
   if (error || !clipData) {
     return (
       <div className="editor-layout" style={{ justifyContent: 'center', alignItems: 'center' }}>
-        <h2 style={{ color: '#ef4444', marginBottom: '1rem' }}>Oops!</h2>
+        <h2 style={{ color: '#ef4444', marginBottom: '1rem' }}>{t('watch.oops')}</h2>
         <p style={{ color: '#a0a0a0', marginBottom: '2rem' }}>{error}</p>
-        <a href="/clips" className="btn btn-primary" style={{ textDecoration: 'none' }}>Ir para a Galeria</a>
+        <a href="/clips" className="btn btn-primary" style={{ textDecoration: 'none' }}>{t('watch.goToGallery')}</a>
       </div>
     );
   }
@@ -191,15 +193,15 @@ export default function WatchScreen({ clipId, onBack }) {
         <nav className="header-nav">
           <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-            Início
+            {t('nav.home')}
           </a>
           <a href="/clips" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"></path></svg>
-            Clips
+            {t('nav.gallery')}
           </a>
           <a href="/" className="hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line><line x1="14.47" y1="14.48" x2="20" y2="20"></line><line x1="8.12" y1="8.12" x2="12" y2="12"></line></svg>
-            Criar clip
+            {t('nav.createClip')}
           </a>
         </nav>
         <div className="header-actions">
@@ -267,7 +269,7 @@ export default function WatchScreen({ clipId, onBack }) {
                   
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '0.95rem', fontWeight: '500' }}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                    {clipData.views || 0} visualizações
+                    {clipData.views || 0} {t('watch.views')}
                   </div>
 
                   {/* Jogo */}
@@ -278,7 +280,7 @@ export default function WatchScreen({ clipId, onBack }) {
                       <div style={{ width: '28px', height: '38px', borderRadius: '4px', backgroundColor: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>🎮</div>
                     )}
                     <div>
-                      <span style={{ color: '#888', fontSize: '0.8rem', display: 'block', lineHeight: 1 }}>Jogando</span>
+                      <span style={{ color: '#888', fontSize: '0.8rem', display: 'block', lineHeight: 1 }}>{t('watch.playing')}</span>
                       <strong style={{ color: '#fff', fontSize: '1rem' }}>{clipData.gameName || 'Desconhecido'}</strong>
                     </div>
                   </div>
@@ -299,7 +301,7 @@ export default function WatchScreen({ clipId, onBack }) {
                     style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.6rem 1rem', borderRadius: '24px', border: '1px solid var(--border-glass)', background: 'var(--bg-glass)', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: '500', transition: 'all 0.2s' }}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
-                    {copied ? 'Copiado!' : 'Compartilhar'}
+                    {copied ? t('watch.copied') : t('watch.share')}
                   </button>
 
                   <a 
@@ -308,7 +310,7 @@ export default function WatchScreen({ clipId, onBack }) {
                     style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.6rem 1rem', borderRadius: '24px', border: 'none', background: 'var(--accent-primary)', color: '#fff', cursor: 'pointer', fontWeight: '500', textDecoration: 'none', transition: 'all 0.2s' }}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    Baixar
+                    {t('watch.download')}
                   </a>
                 </div>
               </div>
@@ -319,7 +321,7 @@ export default function WatchScreen({ clipId, onBack }) {
               <div style={{ borderTop: '1px solid var(--border-subtle)', padding: '1.5rem', backgroundColor: 'var(--bg-glass)' }}>
                 <h3 style={{ color: '#fff', fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"></path><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path><path d="M12 2v2"></path><path d="M12 22v-2"></path><path d="m17 20.66-1-1.73"></path><path d="M11 10.27 7 3.34"></path><path d="m20.66 17-1.73-1"></path><path d="m3.34 7 1.73 1"></path><path d="M14 12h8"></path><path d="M2 12h2"></path><path d="m20.66 7-1.73 1"></path><path d="m3.34 17 1.73-1"></path><path d="m17 3.34-1 1.73"></path><path d="m11 13.73-4 6.93"></path></svg>
-                  Opções do Criador
+                  {t('watch.creatorOptions')}
                 </h3>
                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                   <button 
@@ -327,9 +329,9 @@ export default function WatchScreen({ clipId, onBack }) {
                     style={{ flex: 1, minWidth: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#fff', cursor: 'pointer', fontWeight: '500' }}
                   >
                     {clipData.privacy ? (
-                      <><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Deixar Privado (Não Listado)</>
+                      <><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> {t('watch.makePrivate')}</>
                     ) : (
-                      <><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> Deixar Público (Galeria)</>
+                      <><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> {t('watch.makePublic')}</>
                     )}
                   </button>
                   <button 
@@ -337,7 +339,7 @@ export default function WatchScreen({ clipId, onBack }) {
                     style={{ flex: 1, minWidth: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', cursor: 'pointer', fontWeight: '500' }}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    Excluir Vídeo
+                    {t('watch.deleteVideo')}
                   </button>
                 </div>
               </div>
@@ -348,13 +350,13 @@ export default function WatchScreen({ clipId, onBack }) {
         {/* Coluna Direita: Sugeridos (Lateral Direita) */}
         <div className="watch-sidebar" style={{ flex: '1 1 350px', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-            <h3 style={{ color: 'var(--text-primary)', fontSize: '1.2rem', margin: 0 }}>Vídeos Sugeridos</h3>
-            <a href="/clips" style={{ color: 'var(--accent-primary)', fontSize: '0.9rem', textDecoration: 'none' }}>Ver Galeria</a>
+            <h3 style={{ color: 'var(--text-primary)', fontSize: '1.2rem', margin: 0 }}>{t('watch.suggested')}</h3>
+            <a href="/clips" style={{ color: 'var(--accent-primary)', fontSize: '0.9rem', textDecoration: 'none' }}>{t('watch.viewGallery')}</a>
           </div>
           
           {suggestedClips.length === 0 ? (
             <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
-              <p style={{ color: 'var(--text-secondary)', margin: 0 }}>Nenhum vídeo sugerido no momento.</p>
+              <p style={{ color: 'var(--text-secondary)', margin: 0 }}>{t('watch.noSuggested')}</p>
             </div>
           ) : (
             suggestedClips.map(sc => (
@@ -386,7 +388,7 @@ export default function WatchScreen({ clipId, onBack }) {
                     {sc.title}
                   </h4>
                   <span style={{ color: '#888', fontSize: '0.8rem' }}>{sc.gameName || 'Desconhecido'}</span>
-                  {sc.likes > 0 && <span style={{ color: '#888', fontSize: '0.75rem', marginTop: '2px' }}>{sc.likes} curtidas</span>}
+                  {sc.likes > 0 && <span style={{ color: '#888', fontSize: '0.75rem', marginTop: '2px' }}>{sc.likes} {t('watch.likes')}</span>}
                 </div>
               </a>
             ))
@@ -398,12 +400,12 @@ export default function WatchScreen({ clipId, onBack }) {
       {showDeleteModal && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '450px', textAlign: 'center', padding: '2rem' }}>
-            <h2 style={{ color: '#ef4444', marginBottom: '1rem', fontSize: '1.5rem' }}>⚠️ Confirmar Exclusão</h2>
+            <h2 style={{ color: '#ef4444', marginBottom: '1rem', fontSize: '1.5rem' }}>{t('watch.deleteConfirmTitle')}</h2>
             <p style={{ color: '#fff', marginBottom: '1rem' }}>
-              Você tem certeza que deseja deletar este clipe?
+              {t('watch.deleteConfirmMsg')}
             </p>
             <p style={{ color: '#a0a0a0', fontSize: '0.9rem', marginBottom: '2rem' }}>
-              Ele será removido do Feed e os links pararão de funcionar imediatamente.
+              {t('watch.deleteWarning')}
             </p>
             <div style={{ display: 'flex', gap: '16px' }}>
               <button 
@@ -412,7 +414,7 @@ export default function WatchScreen({ clipId, onBack }) {
                 onClick={() => setShowDeleteModal(false)}
                 disabled={isDeleting}
               >
-                Cancelar
+                {t('watch.cancel')}
               </button>
               <button 
                 className="btn btn-primary" 
@@ -420,7 +422,7 @@ export default function WatchScreen({ clipId, onBack }) {
                 onClick={confirmDeleteClip}
                 disabled={isDeleting}
               >
-                {isDeleting ? 'Excluindo...' : 'Sim, Excluir'}
+                {isDeleting ? t('watch.deleting') : t('watch.yesDelete')}
               </button>
             </div>
           </div>
