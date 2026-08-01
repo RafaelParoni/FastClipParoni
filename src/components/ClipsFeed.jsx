@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import SubmitClipModal from './SubmitClipModal';
 
 export default function ClipsFeed({ onBack }) {
   const [myClips, setMyClips] = useState([]);
@@ -10,10 +11,10 @@ export default function ClipsFeed({ onBack }) {
   const [myClipsPage, setMyClipsPage] = useState(1);
   const [publicClipsPage, setPublicClipsPage] = useState(1);
   
-  // Filtros
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [sortOrder, setSortOrder] = useState('newest');
-  const [dateStart, setDateStart] = useState('');
-  const [dateEnd, setDateEnd] = useState('');
   const [selectedGame, setSelectedGame] = useState('Todos');
   
   const MY_CLIPS_PER_PAGE = 10;
@@ -85,15 +86,6 @@ export default function ClipsFeed({ onBack }) {
     if (selectedGame !== 'Todos') {
       filtered = filtered.filter(c => (c.gameName || 'Desconhecido') === selectedGame);
     }
-    if (dateStart) {
-      const start = new Date(dateStart).getTime();
-      filtered = filtered.filter(c => new Date(c.createdAt).getTime() >= start);
-    }
-    if (dateEnd) {
-      const end = new Date(dateEnd);
-      end.setHours(23, 59, 59, 999);
-      filtered = filtered.filter(c => new Date(c.createdAt).getTime() <= end.getTime());
-    }
     
     filtered.sort((a, b) => {
       const timeA = new Date(a.createdAt).getTime();
@@ -148,80 +140,24 @@ export default function ClipsFeed({ onBack }) {
       </div>
 
       <div className="feed-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
-        <h1 style={{ color: '#fff', fontSize: '2.5rem', marginBottom: '2rem', textAlign: 'center' }}>Galeria de Clipes</h1>
-
-        {/* Painel de Filtros */}
-        <div style={{ 
-          background: 'rgba(255, 255, 255, 0.05)', 
-          padding: '1.5rem', 
-          borderRadius: '12px', 
-          marginBottom: '2.5rem',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '1.5rem',
-          alignItems: 'flex-end'
-        }}>
-          <div style={{ flex: '1 1 200px' }}>
-            <label style={{ display: 'block', color: '#a0a0a0', marginBottom: '0.5rem', fontSize: '0.9rem' }}>🎮 Filtrar por Jogo:</label>
-            <select 
-              value={selectedGame} 
-              onChange={(e) => { setSelectedGame(e.target.value); setMyClipsPage(1); setPublicClipsPage(1); }}
-              style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff' }}
-            >
-              {availableGames.map(game => (
-                <option key={game} value={game}>{game}</option>
-              ))}
-            </select>
-          </div>
-
-          <div style={{ flex: '1 1 200px' }}>
-            <label style={{ display: 'block', color: '#a0a0a0', marginBottom: '0.5rem', fontSize: '0.9rem' }}>📅 Ordenação:</label>
-            <select 
-              value={sortOrder} 
-              onChange={(e) => { setSortOrder(e.target.value); setMyClipsPage(1); setPublicClipsPage(1); }}
-              style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff' }}
-            >
-              <option value="newest">Mais Novos Primeiro</option>
-              <option value="oldest">Mais Antigos Primeiro</option>
-            </select>
-          </div>
-
-          <div style={{ flex: '2 1 300px', display: 'flex', gap: '1rem' }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', color: '#a0a0a0', marginBottom: '0.5rem', fontSize: '0.9rem' }}>De:</label>
-              <input 
-                type="date" 
-                value={dateStart} 
-                onChange={(e) => { setDateStart(e.target.value); setMyClipsPage(1); setPublicClipsPage(1); }}
-                style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff', colorScheme: 'dark' }}
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', color: '#a0a0a0', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Até:</label>
-              <input 
-                type="date" 
-                value={dateEnd} 
-                onChange={(e) => { setDateEnd(e.target.value); setMyClipsPage(1); setPublicClipsPage(1); }}
-                style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff', colorScheme: 'dark' }}
-              />
-            </div>
-          </div>
-          
-          <div style={{ flex: '0 0 auto' }}>
+        <div style={{ position: 'relative', marginBottom: '2.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <h1 style={{ color: '#fff', fontSize: '2.5rem', margin: 0, textAlign: 'center' }}>Galeria de Clipes</h1>
+          <div style={{ position: 'absolute', right: 0, display: 'flex', gap: '0.8rem' }}>
             <button 
-              className="btn btn-secondary"
-              onClick={() => {
-                setSelectedGame('Todos');
-                setSortOrder('newest');
-                setDateStart('');
-                setDateEnd('');
-                setMyClipsPage(1);
-                setPublicClipsPage(1);
-              }}
-              style={{ padding: '0.8rem 1.5rem', height: '100%' }}
+              className="btn btn-primary" 
+              onClick={() => setShowSubmitModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.6rem 1rem' }}
             >
-              Limpar Filtros
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Enviar Clip
+            </button>
+            <button 
+              className="btn btn-secondary" 
+              onClick={() => setShowFilterModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.6rem 1rem' }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+              Filtros {(selectedGame !== 'Todos' || sortOrder !== 'newest') && <span style={{ background: '#4cb5ff', width: '8px', height: '8px', borderRadius: '50%' }}></span>}
             </button>
           </div>
         </div>
@@ -303,6 +239,75 @@ export default function ClipsFeed({ onBack }) {
           </>
         )}
       </div>
+
+      {showFilterModal && (
+        <div className="modal-overlay" onClick={() => setShowFilterModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', padding: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ color: '#fff', fontSize: '1.5rem', margin: 0 }}>Filtrar Clipes</h2>
+              <button onClick={() => setShowFilterModal(false)} style={{ background: 'none', border: 'none', color: '#a0a0a0', cursor: 'pointer', fontSize: '1.5rem' }}>&times;</button>
+            </div>
+            
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', color: '#a0a0a0', marginBottom: '0.5rem', fontSize: '0.9rem' }}>🎮 Escolha o Jogo:</label>
+              <select 
+                value={selectedGame} 
+                onChange={(e) => { setSelectedGame(e.target.value); setMyClipsPage(1); setPublicClipsPage(1); }}
+                style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff' }}
+              >
+                {availableGames.map(game => (
+                  <option key={game} value={game}>{game}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '2.5rem' }}>
+              <label style={{ display: 'block', color: '#a0a0a0', marginBottom: '0.5rem', fontSize: '0.9rem' }}>📅 Ordenar Por:</label>
+              <select 
+                value={sortOrder} 
+                onChange={(e) => { setSortOrder(e.target.value); setMyClipsPage(1); setPublicClipsPage(1); }}
+                style={{ width: '100%', padding: '0.8rem', borderRadius: '4px', border: '1px solid #444', background: '#111', color: '#fff' }}
+              >
+                <option value="newest">Mais Novos Primeiro</option>
+                <option value="oldest">Mais Antigos Primeiro</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button 
+                className="btn btn-secondary"
+                onClick={() => {
+                  setSelectedGame('Todos');
+                  setSortOrder('newest');
+                  setMyClipsPage(1);
+                  setPublicClipsPage(1);
+                  setShowFilterModal(false);
+                }}
+                style={{ flex: 1, padding: '0.8rem' }}
+              >
+                🧹 Limpar
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={() => setShowFilterModal(false)}
+                style={{ flex: 1, padding: '0.8rem' }}
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSubmitModal && (
+        <SubmitClipModal 
+          onClose={() => setShowSubmitModal(false)}
+          onSuccess={(id) => {
+            setShowSubmitModal(false);
+            window.location.reload(); // Recarrega a página para puxar o novo clipe do feed
+          }}
+        />
+      )}
     </div>
   );
 }
