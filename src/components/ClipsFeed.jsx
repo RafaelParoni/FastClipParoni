@@ -144,7 +144,7 @@ export default function ClipsFeed({ onBack }) {
           <h1 style={{ color: '#fff', fontSize: '2.5rem', margin: 0 }}>Galeria de Clipes</h1>
           <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
             <button 
-              className="btn btn-primary hide-on-mobile" 
+              className="btn btn-primary" 
               onClick={() => setShowSubmitModal(true)}
               style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.6rem 1rem' }}
             >

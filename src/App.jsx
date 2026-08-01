@@ -4,6 +4,7 @@ import VideoEditor from './components/VideoEditor';
 import WatchScreen from './components/WatchScreen';
 import ClipsFeed from './components/ClipsFeed';
 import PrivacyPolicy from './components/PrivacyPolicy';
+import MobileOnly from './components/MobileOnly';
 import { useFFmpeg } from './hooks/useFFmpeg';
 
 function App() {
@@ -40,6 +41,14 @@ function App() {
     }
   }, [videoFile]);
 
+  // Firewall para dispositivos móveis no editor
+  useEffect(() => {
+    const isEditorRoute = window.location.pathname === '/editor' || window.location.pathname === '/editor/';
+    if (isEditorRoute && window.innerWidth <= 768) {
+      window.location.href = '/mobile-only';
+    }
+  }, []);
+
   const ffmpeg = useFFmpeg();
 
   function handleVideoSelected(file) {
@@ -71,6 +80,10 @@ function App() {
 
   if (window.location.pathname === '/privacidade' || window.location.pathname === '/privacidade/') {
     return <PrivacyPolicy onBack={handleBackFromWatch} />;
+  }
+
+  if (window.location.pathname === '/mobile-only' || window.location.pathname === '/mobile-only/') {
+    return <MobileOnly />;
   }
 
   if (!videoFile) {

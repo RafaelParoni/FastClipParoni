@@ -242,7 +242,7 @@ export default function SubmitClipModal({ onClose, onSuccess }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '450px' }}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '450px', width: '90%', margin: '1rem', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-header">
           <h2>Enviar Clip</h2>
           {!isSubmitting && (
