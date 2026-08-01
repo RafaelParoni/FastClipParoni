@@ -193,12 +193,8 @@ export default function WatchScreen({ clipId, onBack }) {
             Início
           </a>
           <a href="/clips" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"></path></svg>
             Clips
-          </a>
-          <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line><line x1="14.47" y1="14.48" x2="20" y2="20"></line><line x1="8.12" y1="8.12" x2="12" y2="12"></line></svg>
-            Criar clip
           </a>
         </nav>
         <div className="header-actions">
@@ -219,7 +215,7 @@ export default function WatchScreen({ clipId, onBack }) {
       <div style={{ display: 'flex', gap: '2rem', maxWidth: '1400px', width: '100%', flexWrap: 'wrap', alignItems: 'flex-start' }}>
         
         {/* Coluna Esquerda: Vídeo Principal */}
-        <div style={{ flex: '1 1 800px', minWidth: '300px' }}>
+        <div className="watch-main-column" style={{ flex: '1 1 800px', minWidth: '300px' }}>
           
           <div style={{ backgroundColor: 'var(--bg-glass)', backdropFilter: 'blur(12px)', borderRadius: '16px', overflow: 'hidden', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-glass)' }}>
             
@@ -324,7 +320,7 @@ export default function WatchScreen({ clipId, onBack }) {
         </div>
 
         {/* Coluna Direita: Sugeridos (Lateral Direita) */}
-        <div style={{ flex: '1 1 350px', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="watch-sidebar" style={{ flex: '1 1 350px', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
             <h3 style={{ color: 'var(--text-primary)', fontSize: '1.2rem', margin: 0 }}>Vídeos Sugeridos</h3>
             <a href="/clips" style={{ color: 'var(--accent-primary)', fontSize: '0.9rem', textDecoration: 'none' }}>Ver Galeria</a>

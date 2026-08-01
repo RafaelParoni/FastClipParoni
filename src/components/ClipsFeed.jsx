@@ -140,11 +140,11 @@ export default function ClipsFeed({ onBack }) {
       </div>
 
       <div className="feed-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
-        <div style={{ position: 'relative', marginBottom: '2.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <h1 style={{ color: '#fff', fontSize: '2.5rem', margin: 0, textAlign: 'center' }}>Galeria de Clipes</h1>
-          <div style={{ position: 'absolute', right: 0, display: 'flex', gap: '0.8rem' }}>
+        <div style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <h1 style={{ color: '#fff', fontSize: '2.5rem', margin: 0 }}>Galeria de Clipes</h1>
+          <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
             <button 
-              className="btn btn-primary" 
+              className="btn btn-primary hide-on-mobile" 
               onClick={() => setShowSubmitModal(true)}
               style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.6rem 1rem' }}
             >

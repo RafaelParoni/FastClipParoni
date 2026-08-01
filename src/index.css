@@ -1720,3 +1720,16 @@ p {
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.4);
 }
+
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .watch-main-column, .watch-sidebar {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+  }
+}
