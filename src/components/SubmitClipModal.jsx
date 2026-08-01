@@ -415,11 +415,7 @@ export default function SubmitClipModal({ onClose, onSuccess, initialVideoFile =
         return;
       }
       
-      if (cloudProvider === 'onedrive') {
-        setUploadError(`Integração com OneDrive em breve!`);
-        setIsSubmitting(false);
-        return;
-      }
+
 
       if (cloudProvider === 'google-drive') {
         const token = localStorage.getItem('google_token');
@@ -645,7 +641,6 @@ export default function SubmitClipModal({ onClose, onSuccess, initialVideoFile =
                   >
                     <option value="dropbox">Dropbox</option>
                     <option value="google-drive">Google Drive</option>
-                    <option value="onedrive">OneDrive</option>
                   </select>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginTop: '8px' }}>
                     PS: O vídeo será salvo na pasta /FastClip deste provedor e publicado na galeria.

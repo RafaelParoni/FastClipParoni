@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { db } from '../services/firebase';
 import { doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
+import CustomPlayer from './CustomPlayer';
 
 export default function WatchScreen({ clipId, onBack }) {
   const [copied, setCopied] = useState(false);
@@ -224,40 +225,34 @@ export default function WatchScreen({ clipId, onBack }) {
           <div style={{ backgroundColor: 'var(--bg-glass)', backdropFilter: 'blur(12px)', borderRadius: '16px', overflow: 'hidden', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-glass)' }}>
             
             {/* Player Colado nas Bordas Superiores */}
-            {clipData.url.includes('drive.google.com') ? (() => {
-              // Extrair o ID do Google Drive (ex: uc?id=XYZ&export=download)
-              const match = clipData.url.match(/id=([^&]+)/);
-              const gDriveId = match ? match[1] : null;
-              if (gDriveId) {
-                return (
-                  <iframe 
-                    src={`https://drive.google.com/file/d/${gDriveId}/preview`} 
-                    width="100%" 
-                    height="100%" 
-                    style={{ minHeight: '65vh', border: 'none', backgroundColor: '#000', display: 'block' }} 
-                    allow="autoplay"
-                    allowFullScreen
-                  />
-                );
+            {(() => {
+              let finalUrl = clipData.url;
+              let dUrl = downloadUrl;
+              
+              if (finalUrl.includes('drive.google.com')) {
+                const match = finalUrl.match(/id=([^&]+)/);
+                if (match && match[1]) {
+                  // O Google Drive bloqueia streaming direto via tag <video> (CORS/Redirects).
+                  // Precisamos voltar a usar o iframe nativo deles para que o vídeo rode.
+                  return (
+                    <div style={{ position: 'relative', width: '100%', minHeight: '65vh', backgroundColor: '#000' }}>
+                      <iframe 
+                        src={`https://drive.google.com/file/d/${match[1]}/preview`} 
+                        width="100%" 
+                        height="100%" 
+                        style={{ position: 'absolute', top: 0, left: 0, border: 'none' }} 
+                        allow="autoplay; fullscreen"
+                      />
+                    </div>
+                  );
+                }
               }
+              
+              // Para Dropbox e outros, o CustomPlayer funciona perfeitamente
               return (
-                <video
-                  ref={videoRef}
-                  src={clipData.url}
-                  controls
-                  autoPlay
-                  style={{ width: '100%', maxHeight: '75vh', display: 'block', backgroundColor: '#000' }}
-                />
+                <CustomPlayer src={finalUrl} poster={clipData.thumbnail || clipData.gameBoxArt} downloadUrl={dUrl} />
               );
-            })() : (
-              <video
-                ref={videoRef}
-                src={clipData.url}
-                controls
-                autoPlay
-                style={{ width: '100%', maxHeight: '75vh', display: 'block', backgroundColor: '#000' }}
-              />
-            )}
+            })()}
             
             {/* Informações Abaixo do Vídeo */}
             <div style={{ padding: '1.5rem' }}>
